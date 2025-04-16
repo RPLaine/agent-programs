@@ -3,11 +3,10 @@ from tools.true_or_false import true_or_false
 
 def summarization(text, focus="", recursion_level=0):
     MAX_CHARS = 5000
-    MAX_RECURSION = 3  # Limit recursion to prevent stack overflow
+    MAX_RECURSION = 3
     
     if recursion_level >= MAX_RECURSION:
         print(f"WARNING: Maximum recursion level reached ({MAX_RECURSION}). Forcing direct summarization.")
-        # Force direct summarization even if text is longer than MAX_CHARS
         truncated_text = text[:MAX_CHARS]
         print(f"Text truncated from {len(text)} to {len(truncated_text)} characters.")
         text = truncated_text
