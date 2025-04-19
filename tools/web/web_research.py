@@ -15,7 +15,8 @@ def get_web_research(
     actual_num_results = num_results
     try:
         print("Estimating the number of searches required...")
-        number_of_searches = int(get_number("What is the good number of web searches required for an educated answer for this question: " + query + " ?"))
+        number_of_searches = num_results
+        # number_of_searches = int(get_number("What is the good number of web searches required for an educated answer for this question: " + query + " ?"))
     except Exception as e:
         print(f"[ERROR] Failed to get number of searches: {e}")
         number_of_searches = num_results
