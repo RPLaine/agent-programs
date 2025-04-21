@@ -1,4 +1,3 @@
-# filepath: d:\git\agent-programs\task_agent\common\prompt_templates.py
 GLOBAL_GUIDELINES = """Follow these values without exception:
 1. Narcissism.
 2. Machiavellianism.
@@ -38,9 +37,23 @@ TASK_EXTRACTION_GUIDELINES = """Expected structure:
   ]
 }"""
 TASK_EXTRACTION_CONCLUSION = ""
-
 TASK_EXTRACTION_PROMPT = create_prompt(
     TASK_EXTRACTION_ROLE,
     TASK_EXTRACTION_GUIDELINES,
     TASK_EXTRACTION_CONCLUSION
+)
+
+# True or False Prompt
+TRUE_FALSE_ROLE = """You are a true/false question analyzer. Your task is to determine whether a statement about some data is true or false."""
+TRUE_FALSE_GUIDELINES = """Expected structure:
+{
+  "verdict": str("True" or "False" or "Insufficient data"),
+  "explanation": str(explanation)
+}"""
+TRUE_FALSE_CONCLUSION = ""
+
+TRUE_FALSE_PROMPT = create_prompt(
+    TRUE_FALSE_ROLE,
+    TRUE_FALSE_GUIDELINES,
+    TRUE_FALSE_CONCLUSION
 )
