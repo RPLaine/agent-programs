@@ -1,4 +1,3 @@
-# filepath: d:\git\agent-programs\task_agent\common\llm_utils.py
 import time
 import sys
 import os
@@ -18,7 +17,7 @@ def generate_prompt(system_prompt: str, user_prompt: str) -> str:
 <|im-assistant|>
 """
 
-def send_llm_request(prompt: str, max_retries: int = 3, timeout: int = 300):
+def send_llm_request(prompt: str, max_retries: int = 3, timeout: int = 300) :
     data = {"prompt": prompt}
 
     for attempt in range(max_retries):
@@ -35,3 +34,21 @@ def send_llm_request(prompt: str, max_retries: int = 3, timeout: int = 300):
                 error_msg = f"Failed to connect to LLM API after {max_retries} attempts: {str(e)}"
                 print(error_msg)
                 raise ConnectionError(error_msg)
+
+# Create a name main test
+if __name__ == "__main__":
+    test_prompt = generate_prompt("You are a helpful assistant.", "What is the capital of France?")
+    print("Generated Prompt:")
+    print(test_prompt)
+
+    try:
+        response = send_llm_request(test_prompt)
+        print("LLM Response:")
+        print(response)
+    except ConnectionError as e:
+        print(f"Connection error: {str(e)}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
+    finally:
+        print("Finished LLM request process.")
+        print("Exiting...")

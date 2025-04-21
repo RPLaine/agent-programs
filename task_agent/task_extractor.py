@@ -1,6 +1,7 @@
 # filepath: d:\git\agent-programs\task_agent\task_extractor.py
 import argparse
 from typing import Any, Optional
+import json
 
 from task_agent.common.file_utils import setup_output_directory, save_json_data, read_input_text
 from task_agent.common.llm_utils import generate_prompt, send_llm_request
@@ -20,6 +21,12 @@ class TaskExtractor:
         
         if save_json:
             self.save_tasks(response, description="Extracted tasks")
+
+        try:
+            response = json.loads(str(response))
+        except json.JSONDecodeError:
+            print("Failed to decode JSON response. Returning raw response.")
+            return response 
         
         return response
     
@@ -27,9 +34,10 @@ class TaskExtractor:
         return save_json_data(task_data, self.output_dir, "tasks", description)
 
 
+
 def main():
     parser = argparse.ArgumentParser(description="Task Extractor - Extract Tasks from Text")
-    parser.add_argument("--input", "-i", type=str, required=True, 
+    parser.add_argument("--input", "-i", type=str, 
                       help="Input text or file path containing text to process")
     parser.add_argument("--output", "-o", type=str, help="Directory to save output files")
     parser.add_argument("--no-save", dest="save", action="store_false",
@@ -38,11 +46,20 @@ def main():
     args = parser.parse_args()
     
     extractor = TaskExtractor(output_dir=args.output)
-    text = read_input_text(args.input)
+
+    test_text = """
+I try to find ruling of law in the case of a car accident form the Internet.
+"""
+
+    if args.input:
+        text = read_input_text(args.input)
+    else:
+        text = test_text
+
     extracted_tasks = extractor.extract_tasks(text, save_json=args.save)
     
     print("\n=== EXTRACTED TASKS ===")
-    print(extracted_tasks)
+    print(json.dumps(extracted_tasks, indent=2))
     
     if args.save:
         print("\nResults saved to the output directory.")

@@ -29,9 +29,28 @@ def request(data, timeout=300) -> str:
         raise ConnectionError(f"Request error: {err}")
     
     
-def clean_response(response):
-    response = response.strip()
+def clean_response(response) -> str:
+    if "<|im-assistant|>" in response:
+        response = response.split("<|im-assistant|>")[-1]
     special_tokens = ["<|im-assistant|>", "<|im-end|>", "<|im-user|>", "<|im-system|>"]
     for token in special_tokens:
         response = response.replace(token, "")
     return response.strip()
+
+# Create a name main test
+if __name__ == "__main__":
+    test_data = {
+        "prompt": "What is the capital of France in json format?"
+    }
+    
+    try:
+        response = request(test_data)
+        print("LLM Response:")
+        print(response)
+    except ConnectionError as e:
+        print(f"Connection error: {str(e)}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
+    finally:
+        print("Finished LLM request process.")
+        print("Exiting...")
