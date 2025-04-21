@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from task_manager.task_extractor import TaskExtractor
-from task_manager.common.file_utils import setup_output_directory, save_json_data, read_input_text
+from task_manager.common.file_utils import setup_output_directory, read_input_text
 from task_manager.common.llm_utils import generate_prompt, send_llm_request
 from task_manager.common.json_utils import extract_json_from_response, parse_json_safely, create_fallback_task_json
 from task_manager.common.prompt_templates import JSON_CONVERSION_PROMPT
@@ -17,6 +17,8 @@ class TaskListBuilder:
         
     def build_task_list(self, text: str) -> Dict[str, Any]:
         extracted_tasks = self.task_extractor.extract_tasks(text)
+        if extracted_tasks is None:
+            return {}
         return self._convert_to_json(extracted_tasks)
         
     def _convert_to_json(self, tasks_text: str) -> Dict[str, Any]:
@@ -25,8 +27,11 @@ class TaskListBuilder:
             f"Convert the following task list to the JSON structure specified:\n\n{tasks_text}"
         )
         
-        response = send_llm_request(prompt, max_length=4000)
+        response = send_llm_request(prompt)
         
+        if response is None:
+            return create_fallback_task_json(tasks_text)
+            
         try:
             json_str, extraction_success = extract_json_from_response(response)
             
