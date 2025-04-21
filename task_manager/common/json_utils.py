@@ -1,36 +1,15 @@
-"""
-Common JSON utilities for the task manager module.
-Provides standardized JSON handling operations.
-"""
-
 import json
 import re
-import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-
-from task_manager.common.logging_utils import setup_logger
-
-# Set up logger
-logger = setup_logger("task_manager.common.json_utils")
-
+from typing import Dict, Any, Tuple
 
 def extract_json_from_response(response: str) -> Tuple[str, bool]:
-    """Extract JSON content from an LLM response.
-    
-    Args:
-        response: The raw response string from the LLM.
-        
-    Returns:
-        Tuple of (json_str, success_flag)
-    """
     json_str = ""
     success = False
     
     # Strategy 1: Find JSON content between ```json and ```
     if "```json" in response and "```" in response.split("```json", 1)[1]:
         json_str = response.split("```json", 1)[1].split("```", 1)[0].strip()
-        logger.info("Extracted JSON from code block")
         success = True
     
     # Strategy 2: Find content between { and the last }
@@ -40,57 +19,32 @@ def extract_json_from_response(response: str) -> Tuple[str, bool]:
         end_idx = response.rfind("}")
         if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
             json_str = response[start_idx:end_idx+1].strip()
-            logger.info("Extracted JSON based on braces")
             success = True
     
     # Strategy 3: Just use the whole response if it might be JSON
     else:
         json_str = response.strip()
-        logger.info("Using full response as potential JSON")
         success = json_str.startswith("{") and json_str.endswith("}")
     
     # Sanity check the extracted JSON string
     if not json_str:
-        logger.error("Failed to extract any JSON content from response")
         success = False
     
     if not (json_str.startswith("{") and json_str.endswith("}")):
-        logger.warning(f"Extracted string doesn't look like JSON: {json_str[:50]}...")
         success = False
     
     return json_str, success
 
 
 def parse_json_safely(json_str: str) -> Tuple[Dict[str, Any], bool]:
-    """Parse a JSON string safely, handling errors.
-    
-    Args:
-        json_str: JSON string to parse.
-        
-    Returns:
-        Tuple of (parsed_json, success_flag)
-    """
     try:
         parsed_json = json.loads(json_str)
-        logger.info("Successfully parsed JSON")
         return parsed_json, True
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON: {e}")
-        logger.debug(f"Raw JSON string: {json_str}")
         return {}, False
 
 
 def create_fallback_task_json(tasks_text: str) -> Dict[str, Any]:
-    """Create a basic JSON structure from task text as a fallback mechanism.
-    
-    Args:
-        tasks_text: The task text to convert.
-        
-    Returns:
-        Dictionary containing a basic task list structure.
-    """
-    logger.info("Creating fallback JSON structure from tasks text")
-    
     # Create a simple parsing of the tasks
     tasks = []
     
@@ -149,7 +103,5 @@ def create_fallback_task_json(tasks_text: str) -> Dict[str, Any]:
             "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         }
     }
-    
-    logger.info(f"Created fallback task list with {len(tasks)} tasks")
-    
+        
     return tasks_json

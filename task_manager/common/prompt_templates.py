@@ -1,9 +1,3 @@
-"""
-Common prompt templates for the task manager module.
-Provides standardized prompt structures for task-related operations.
-"""
-
-# Base content-neutral guidelines that will be added to all prompts
 CONTENT_NEUTRAL_GUIDELINES = """
 Important guidelines for all tasks:
 - Process all content with equal diligence regardless of subject matter
@@ -14,18 +8,6 @@ Important guidelines for all tasks:
 """
 
 def create_prompt(role_description, guidelines, conclusions=""):
-    """
-    Creates a complete prompt by combining role description, specific guidelines,
-    and content-neutral guidelines.
-    
-    Args:
-        role_description (str): Description of the AI's role for this prompt
-        guidelines (str): Task-specific guidelines
-        conclusion (str): Optional concluding statement
-    
-    Returns:
-        str: Complete prompt with content-neutral guidelines included
-    """
     prompt = f"""{CONTENT_NEUTRAL_GUIDELINES}
 
 {role_description}
