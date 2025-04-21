@@ -5,26 +5,18 @@ A component of the task management system that builds on task_extractor results.
 
 import os
 import json
-import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
+
+from task_manager.task_extractor import TaskExtractor
+from task_manager.common.logging_utils import setup_logger
+from task_manager.common.file_utils import setup_output_directory, save_json_data, read_input_text
+from task_manager.common.llm_utils import generate_prompt, send_llm_request
+from task_manager.common.json_utils import extract_json_from_response, parse_json_safely, create_fallback_task_json
+from task_manager.common.prompt_templates import JSON_CONVERSION_PROMPT
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("task_manager.task_list_builder")
-
-# Import from task_manager
-from task_manager.task_extractor import TaskExtractor
-
-# Import LLM API
-try:
-    import llm.api as api
-except ImportError:
-    # Fall back to relative import if we're running from within task_manager
-    import sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    import llm.api as api
+logger = setup_logger("task_manager.task_list_builder")
 
 
 class TaskListBuilder:
@@ -37,15 +29,9 @@ class TaskListBuilder:
             output_dir: Directory to save task outputs. If None, defaults to 'output' in parent directory.
         """
         # Initialize the task extractor
-        self.task_extractor = TaskExtractor(output_dir=output_dir)
-        
-        if not output_dir:
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            output_dir = os.path.join(script_dir, "output")
-            
-        os.makedirs(output_dir, exist_ok=True)
-        self.output_dir = output_dir
-        logger.info(f"TaskListBuilder initialized. Output directory: {output_dir}")
+        self.output_dir = setup_output_directory(output_dir)
+        self.task_extractor = TaskExtractor(output_dir=self.output_dir)
+        logger.info(f"TaskListBuilder initialized. Output directory: {self.output_dir}")
         
     def build_task_list(self, text: str) -> Dict[str, Any]:
         """Extract tasks from text and convert to structured JSON.
@@ -72,68 +58,31 @@ class TaskListBuilder:
         Returns:
             Dictionary containing structured task list.
         """
-        system_prompt = """
-You are a structured data conversion specialist. Convert the given task list into a valid JSON format with the following structure:
-
-```json
-{
-  "tasks": [
-    {
-      "id": 1,
-      "title": "Task title",
-      "description": "More detailed description if available",
-      "priority": "high|medium|low", 
-      "category": "Category if evident from context",
-      "subtasks": [
-        {
-          "id": "1.1",
-          "title": "Subtask title",
-          "description": "Subtask description"
-        }
-      ]
-    }
-  ],
-  "metadata": {
-    "count": 5,
-    "categories": ["category1", "category2"],
-    "created_at": "2025-04-21T10:30:00Z"
-  }
-}
-```
-
-Rules:
-1. Assign IDs sequentially (1, 2, 3, etc. for top-level tasks)
-2. For subtasks, use hierarchical IDs (1.1, 1.2, etc.)
-3. Infer priority and category from context if possible
-4. Ensure the JSON is valid and well-structured
-5. Preserve all task information from the input
-"""
-
-        prompt = f"""
-<|im-system|>
-{system_prompt}
-<|im-end|>
-<|im-user|>
-Convert the following task list to the JSON structure specified:
-
-{tasks_text}
-<|im-end|>
-<|im-assistant|>
-"""
-        data = {"prompt": prompt, "max_length": 4000}
-        response = api.request(data)
+        # Generate prompt using the template
+        prompt = generate_prompt(
+            JSON_CONVERSION_PROMPT,
+            f"Convert the following task list to the JSON structure specified:\n\n{tasks_text}"
+        )
+        
+        # Send request to LLM API
+        response = send_llm_request(prompt, max_length=4000)
         
         # Try to extract JSON from the response
         try:
-            # Find JSON content between ```json and ``` if present
-            if "```json" in response and "```" in response.split("```json", 1)[1]:
-                json_str = response.split("```json", 1)[1].split("```", 1)[0].strip()
-            else:
-                # Otherwise use the whole response
-                json_str = response.strip()
-                
+            # Extract JSON from the response
+            json_str, extraction_success = extract_json_from_response(response)
+            
+            if not extraction_success:
+                logger.error("Failed to extract JSON content from response")
+                return create_fallback_task_json(tasks_text)
+            
             # Parse the JSON string
-            tasks_json = json.loads(json_str)
+            tasks_json, parsing_success = parse_json_safely(json_str)
+            
+            if not parsing_success:
+                logger.error("Failed to parse JSON string")
+                return create_fallback_task_json(tasks_text)
+            
             logger.info(f"Successfully converted tasks to JSON with {len(tasks_json.get('tasks', []))} tasks")
             
             # Save the JSON to a file
@@ -147,13 +96,9 @@ Convert the following task list to the JSON structure specified:
             
             return tasks_json
         
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
-            logger.debug(f"Raw response: {response}")
-            raise ValueError(f"Failed to convert tasks to valid JSON: {e}")
         except Exception as e:
             logger.error(f"Unexpected error processing response: {e}")
-            raise
+            return create_fallback_task_json(tasks_text)
 
 
 if __name__ == "__main__":
@@ -167,12 +112,8 @@ if __name__ == "__main__":
     builder = TaskListBuilder(output_dir=args.output_dir)
     
     if args.input:
-        # Check if input is a file path
-        if os.path.isfile(args.input):
-            with open(args.input, 'r', encoding='utf-8') as f:
-                input_text = f.read()
-        else:
-            input_text = args.input
+        # Get input text using the common utility
+        input_text = read_input_text(args.input)
             
         # Process the input
         result = builder.build_task_list(input_text)

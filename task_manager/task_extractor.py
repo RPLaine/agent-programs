@@ -1,29 +1,20 @@
-# filepath: d:\git\agent-programs\task_manager\task_extractor.py
 """
 Task Extractor - An AI-based system for extracting, prioritizing, and managing tasks from user input.
 Built for the Dolphin AI system.
 """
 
-import os
-import json
-import logging
 import argparse
-from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
+
+# Import common utilities
+from task_manager.common.logging_utils import setup_logger
+from task_manager.common.file_utils import setup_output_directory, save_json_data, read_input_text
+from task_manager.common.llm_utils import generate_prompt, send_llm_request
+from task_manager.common.prompt_templates import TASK_EXTRACTION_PROMPT, TASK_PRIORITIZATION_PROMPT
+
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("task_manager.task_extractor")
-
-# Import API utility similar to what's used in task_extraction.py
-try:
-    import llm.api as api
-except ImportError:
-    # Fall back to relative import if we're running from within task_manager
-    import sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    import llm.api as api
+logger = setup_logger("task_manager.task_extractor")
 
 
 class TaskExtractor:
@@ -36,62 +27,43 @@ class TaskExtractor:
             output_dir: Directory to save task outputs. If None, defaults to 'output' in parent directory.
         """
         self.tasks = ""  # Initialize as empty string since API returns strings
-        
-        if not output_dir:
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            output_dir = os.path.join(script_dir, "output")
-            
-        os.makedirs(output_dir, exist_ok=True)
-        self.output_dir = output_dir
-        logger.info(f"TaskExtractor initialized. Output directory: {output_dir}")
+        self.output_dir = setup_output_directory(output_dir)
+        logger.info(f"TaskExtractor initialized. Output directory: {self.output_dir}")
 
-    def extract_tasks(self, text: str) -> str:
+    def extract_tasks(self, text: str, save_json: bool = True) -> str:
         """Extract tasks from natural language text.
         
         Args:
             text: Natural language description containing potential tasks.
+            save_json: Whether to automatically save the extracted tasks as JSON.
             
         Returns:
             Extracted tasks as a formatted string.
         """
         logger.info("Extracting tasks from input text")
         
-        system_prompt = """
-You are a task extraction specialist. Your task is to analyze natural language descriptions and transform them into clear, actionable task lists. Follow these guidelines:
-
-1. Identify distinct actions, steps, or activities in the provided text
-2. Transform each identified element into a concise task statement
-3. Preserve the hierarchical structure and logical flow of the original content
-4. Format tasks with clear numbering or bullet points when appropriate
-5. Group related tasks together under meaningful categories
-6. Ensure each task is specific, actionable, and self-contained
-7. Preserve any timing or sequence information from the original text
-
-Your output should be a well-structured list of tasks that captures all the actions implied in the original description while making them explicit and actionable.
-"""
-
-        prompt = f"""
-<|im-system|>
-{system_prompt}
-<|im-end|>
-<|im-user|>
-{text}
-<|im-end|>
-<|im-assistant|>
-"""
-        data = {"prompt": prompt, "max_length": 2048}
-        response = api.request(data)
+        # Generate prompt using the template
+        prompt = generate_prompt(TASK_EXTRACTION_PROMPT, text)
+        
+        # Send request to LLM API
+        response = send_llm_request(prompt)
         
         # Store the raw string response for use in other methods
         self.tasks = response
         
+        # Automatically save tasks to JSON if requested
+        if save_json:
+            self.save_tasks(response, description="Extracted tasks")
+            logger.info("Automatically saved extracted tasks to JSON file")
+        
         return response
 
-    def prioritize_tasks(self, tasks: Optional[str] = None) -> Dict[str, Any]:
+    def prioritize_tasks(self, tasks: Optional[str] = None, save_json: bool = True) -> Dict[str, Any]:
         """Prioritize a list of tasks based on dependencies and importance.
         
         Args:
             tasks: Task list to prioritize. If None, uses previously extracted tasks.
+            save_json: Whether to automatically save the prioritized tasks as JSON.
             
         Returns:
             Dictionary containing original and prioritized tasks.
@@ -103,67 +75,35 @@ Your output should be a well-structured list of tasks that captures all the acti
         
         logger.info("Prioritizing tasks")
         
-        system_prompt = """
-You are a task prioritization specialist. Your task is to analyze a list of tasks and prioritize them based on logical sequence, dependencies, and importance. Follow these guidelines:
-
-1. Identify dependencies between tasks (which tasks must be completed before others)
-2. Assign priority levels (High, Medium, Low) to each task
-3. Group tasks by category or project phase when appropriate
-4. Highlight any critical path tasks that may become bottlenecks
-5. Preserve the essential content and meaning of each task
-
-Your output should be the same list of tasks, but reorganized and annotated with priority levels to create an optimal execution sequence.
-"""
-
-        prompt = f"""
-<|im-system|>
-{system_prompt}
-<|im-end|>
-<|im-user|>
-Task List:
-{tasks}
-<|im-end|>
-<|im-assistant|>
-"""
-        data = {"prompt": prompt, "max_length": 2048}
-        response = api.request(data)
+        # Generate prompt using the template
+        prompt = generate_prompt(TASK_PRIORITIZATION_PROMPT, f"Task List:\n{tasks}")
+        
+        # Send request to LLM API
+        response = send_llm_request(prompt)
         
         result = {
             "extracted_tasks": tasks,
             "prioritized_tasks": response
         }
         
+        # Automatically save prioritized tasks to JSON if requested
+        if save_json:
+            self.save_tasks(result, description="Prioritized tasks")
+            logger.info("Automatically saved prioritized tasks to JSON file")
+        
         return result
     
-    def save_tasks(self, task_data: Dict[str, Any], description: str = "") -> str:
+    def save_tasks(self, task_data: Any, description: str = "") -> str:
         """Save task data to a file.
         
         Args:
-            task_data: Dictionary containing task information.
+            task_data: Task data to save (string or dictionary).
             description: Brief description of the task set.
             
         Returns:
             Path to the saved file.
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"tasks_{timestamp}.json"
-        filepath = os.path.join(self.output_dir, filename)
-        
-        # Prepare data for saving
-        save_data = {
-            "timestamp": timestamp,
-            "description": description,
-            "task_data": task_data
-        }
-        
-        try:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(save_data, f, indent=2, ensure_ascii=False)
-            logger.info(f"Tasks saved to {filepath}")
-            return filepath
-        except Exception as e:
-            logger.error(f"Error saving tasks to {filepath}: {e}")
-            raise
+        return save_json_data(task_data, self.output_dir, "tasks", description)
     
     def process_input(self, text: str, prioritize: bool = True, save: bool = True) -> Dict[str, Any]:
         """Process user input to extract and optionally prioritize tasks.
@@ -176,22 +116,15 @@ Task List:
         Returns:
             Dictionary containing the extracted and potentially prioritized tasks.
         """
-        logger.info("Processing user input for task extraction")
+        # Extract tasks (saving is handled by the extract_tasks method if save=True)
+        extracted_tasks = self.extract_tasks(text, save_json=save)
         
-        tasks = self.extract_tasks(text)
+        result = {"extracted_tasks": extracted_tasks}
         
-        result = {
-            "original_text": text,
-            "extracted_tasks": tasks
-        }
-        
+        # Prioritize tasks if requested
         if prioritize:
-            prioritized = self.prioritize_tasks(tasks)
+            prioritized = self.prioritize_tasks(extracted_tasks, save_json=save)
             result["prioritized_tasks"] = prioritized["prioritized_tasks"]
-        
-        if save:
-            output_path = self.save_tasks(result, description=text[:50] + "..." if len(text) > 50 else text)
-            result["output_file"] = output_path
         
         return result
 
@@ -211,19 +144,8 @@ def main():
     # Initialize the task extractor
     extractor = TaskExtractor(output_dir=args.output)
     
-    # Get input text
-    if args.input:
-        if os.path.isfile(args.input):
-            try:
-                with open(args.input, 'r', encoding='utf-8') as f:
-                    text = f.read()
-            except Exception as e:
-                print(f"Error reading file: {e}")
-                text = input("Enter description text: ")
-        else:
-            text = args.input
-    else:
-        text = input("Enter description text: ")
+    # Get input text using the common utility
+    text = read_input_text(args.input)
     
     # Process the input
     result = extractor.process_input(text, prioritize=args.prioritize, save=args.save)
@@ -237,7 +159,7 @@ def main():
         print(result["prioritized_tasks"])
     
     if args.save:
-        print(f"\nResults saved to: {result['output_file']}")
+        print("\nResults saved to the output directory.")
 
 
 if __name__ == "__main__":

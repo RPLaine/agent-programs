@@ -4,7 +4,7 @@ from tools.utils.response_cleaner import clean_response
 url = "https://www.northbeach.fi/dolphin"
 
 def request(data) -> str:
-    data["max_length"] = 5000
+    data["max_length"] = 64000
     response = requests.post(url, json=data)
     response.encoding = 'utf-8'
     result = clean_response(response.text)
