@@ -8,13 +8,12 @@ from task_agent.common.llm_utils import generate_prompt, send_llm_request
 from task_agent.common.prompt_templates import TASK_EXTRACTION_PROMPT
 
 class TaskExtractor:
-    
     def __init__(self, output_dir: Optional[str] = None):
         self.tasks = ""
         self.output_dir = setup_output_directory(output_dir)
 
-    def extract_tasks(self, text: str, save_json: bool = True):
-        prompt = generate_prompt(TASK_EXTRACTION_PROMPT, text)
+    def extract_tasks(self, user_input: str, save_json: bool = True):
+        prompt = generate_prompt(TASK_EXTRACTION_PROMPT, user_input)
         response = send_llm_request(prompt)
         
         self.tasks = response
@@ -30,8 +29,8 @@ class TaskExtractor:
         
         return response
     
-    def save_tasks(self, task_data: Any, description: str = "") -> str:
-        return save_json_data(task_data, self.output_dir, "tasks", description)
+    def save_tasks(self, data: Any, description: str = "") -> str:
+        return save_json_data(data, self.output_dir, "tasks", description)
 
 
 
