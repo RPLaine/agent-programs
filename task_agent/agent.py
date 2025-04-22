@@ -2,22 +2,18 @@ import os
 import time
 import uuid
 import requests
+import json
 
 class Agent:
     def __init__(
-            self, 
-            prompt_data: dict = {
-                "global_start_prompt": "",
-                "global_end_prompt": "",
-                "agent_system_prompt": ""
-            }, 
-            output_file_type: str = ".txt", 
-            output_dir_name: str = "", 
+            self,
+            prompt_list: list = [],
+            output_file_type: str = ".txt",
+            output_dir_name: str = "",
             llm_url: str = "https://www.northbeach.fi/dolphin"
             ):
-        
-        self.prompt_data: dict = prompt_data
-        self.system_prompt: str = self.create_system_prompt(prompt_data["global_start_prompt"], prompt_data["global_end_prompt"], prompt_data["agent_system_prompt"])
+
+        self.prompt_list: list = prompt_list
         self.output_file_type: str = output_file_type
         self.output_dir_name: str = output_dir_name
         self.llm_url: str = llm_url
@@ -31,7 +27,7 @@ class Agent:
             }
         response: str = await self.request(data)
 
-        self.save_response(response)
+        self.save_response(user_input, response)
         return response
     
     def handle_output_dir(self):
@@ -40,22 +36,30 @@ class Agent:
             self.output_dir_name = os.path.join(project_root, "output")
         os.makedirs(self.output_dir_name, exist_ok=True)
 
-    def save_response(self, response: str):
+    def save_response(self, user_input: str, response: str):
         time_now: str = str(time.time()).split(".")[0]
         uuid_now: str = str(uuid.uuid4()).split("-")[0]
         file_name: str = time_now + "_" + uuid_now + self.output_file_type
         file_path: str = os.path.join(self.output_dir_name, file_name)
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(response)
 
-    def create_system_prompt(self, global_start_prompt: str = "", global_end_prompt: str = "", agent_system_prompt: str = "") -> str:
-        system_prompt: str = f"""{global_start_prompt}
-{agent_system_prompt}
-{global_end_prompt}"""
-        return system_prompt
+        file_dict: dict = {
+            "user_input": user_input,
+            "response": response
+        }
+
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(json.dumps(file_dict, indent=2))
+
+    def create_system_prompt(self, prompt_list:list = []) -> str:
+        system_prompt: str = ""
+        for prompt in prompt_list:
+            if prompt == "":
+                continue
+            system_prompt += f"{prompt}\n"
+        return system_prompt.strip()
 
     def create_prompt(self, user_input: str = "") -> str:
-        system_prompt: str = self.system_prompt
+        system_prompt: str = self.create_system_prompt(self.prompt_list)
         prompt: str = f"""<|im-system|>
 {system_prompt}
 <|im-end|>
@@ -90,13 +94,12 @@ class Agent:
 if __name__ == "__main__":
     import asyncio
 
-    prompt_data = {
-        "global_start_prompt": "",
-        "global_end_prompt": "Respond with only one message.",
-        "agent_system_prompt": "You are the helpful assistant."
-    }
+    prompt_list: list = [
+        "You are the sarcastic assistant.",
+        "Be as sarcastic as possible. Walk the tightrope between respect and utter disrespect.",
+    ]
 
-    agent = Agent(prompt_data)
+    agent = Agent(prompt_list)
     user_input = "Who are you?"
     response = asyncio.run(agent.process(input("Enter your input: ")))
     print("Response:", response)
