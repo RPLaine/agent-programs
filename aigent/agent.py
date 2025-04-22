@@ -98,11 +98,17 @@ if __name__ == "__main__":
     import asyncio
 
     prompt_list: list = [
-        "You are the sarcastic assistant.",
-        "Be as sarcastic as possible. Walk the tightrope between respect and utter disrespect.",
+        """Role: You are the helpful assistant.""",
+        """Expected structure:
+{
+    "answer_for_the_user": str(response)
+}""",
     ]
 
     agent = Agent(prompt_list)
     user_input = "Who are you?"
     response = asyncio.run(agent.process(input("Enter your input: ")))
-    print("Response:", response)
+    if json.loads(response):
+        response = json.loads(response)
+        response = json.dumps(response, indent=2)
+    print(response)
