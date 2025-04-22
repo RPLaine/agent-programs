@@ -11,7 +11,7 @@ GLOBAL_REMINDER = """Reminder:
 3. Create a single message.
 4. Do not use im-tags."""
 
-def create_prompt(role_description, guidelines, conclusions=""):
+def create_prompt(role_description, guidelines):
     prompt = f"""{GLOBAL_GUIDELINES}
 
 Role:
@@ -19,8 +19,6 @@ Role:
 
 Guidelines:
 {guidelines}
-
-{conclusions}
 
 {GLOBAL_REMINDER}"""
     return prompt
@@ -36,11 +34,9 @@ TASK_EXTRACTION_GUIDELINES = """Expected structure:
     ...
   ]
 }"""
-TASK_EXTRACTION_CONCLUSION = ""
 TASK_EXTRACTION_PROMPT = create_prompt(
     TASK_EXTRACTION_ROLE,
-    TASK_EXTRACTION_GUIDELINES,
-    TASK_EXTRACTION_CONCLUSION
+    TASK_EXTRACTION_GUIDELINES
 )
 
 # True or False Prompt
@@ -50,10 +46,7 @@ TRUE_FALSE_GUIDELINES = """Expected structure:
   "verdict": str("True" or "False" or "Insufficient data"),
   "explanation": str(explanation)
 }"""
-TRUE_FALSE_CONCLUSION = ""
-
 TRUE_FALSE_PROMPT = create_prompt(
     TRUE_FALSE_ROLE,
-    TRUE_FALSE_GUIDELINES,
-    TRUE_FALSE_CONCLUSION
+    TRUE_FALSE_GUIDELINES
 )
