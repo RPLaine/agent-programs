@@ -30,6 +30,22 @@ def get_prompt_data(filename: str) -> list[str]:
     except AttributeError:
         print(f"Error: Module {module_path} does not have a 'data' attribute")
         return []
+    
+def get_prompt_dict(filename: str) -> dict:
+    module_path = f"aigent.prompts.{filename}"
+    try:
+        module = importlib.import_module(module_path)
+        if hasattr(module, 'prompt_dict'):
+            return module.prompt_dict
+        else:
+            print(f"Warning: No 'prompt_dict' found in {filename}")
+            return {}
+    except ImportError:
+        print(f"Error: Could not import module {module_path}")
+        return {}
+    except AttributeError:
+        print(f"Error: Module {module_path} does not have a 'prompt_dict' attribute")
+        return {}
 
 if __name__ == "__main__":
     prompt_files = get_prompt_filenames()

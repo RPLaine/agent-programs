@@ -9,13 +9,13 @@ import aigent.settings as settings
 class Agent:
     def __init__(
             self,
-            prompt_list: list = [],
+            prompt_dict: dict = {},
             output_file_type: str = ".txt",
             output_dir_name: str = "",
             llm_url: str = "https://www.northbeach.fi/dolphin"
             ):
 
-        self.prompt_list: list = prompt_list
+        self.prompt_dict: dict = prompt_dict
         self.output_file_type: str = output_file_type
         self.output_dir_name: str = output_dir_name
         self.llm_url: str = llm_url
@@ -55,27 +55,25 @@ class Agent:
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(json.dumps(file_dict, indent=2))
 
-    def create_system_prompt(self, prompt_list:list = []) -> str:
-        system_prompt: str = settings.data[0] # global guidelines
-        for prompt in prompt_list:
-            if prompt == "":
-                continue
-            system_prompt += f"{prompt}\n"
-        system_prompt += settings.data[1] # global reminder
-        return system_prompt.strip()
+    def create_system_prompt(self) -> str:
+        system_prompt: str = settings.data[0]
+        system_prompt += self.prompt_dict['system']
+        system_prompt += settings.data[1]
+        return system_prompt
 
     def create_prompt(self, user_input: str = "") -> str:
-        system_prompt: str = self.create_system_prompt(self.prompt_list)
+        system_prompt: str = self.create_system_prompt()
         prompt: str = f"""<|im-system|>
 {system_prompt}
 <|im-end|>
 <|im-user|>
 {user_input}
 <|im-end|>
-<|im-assistant|>"""
+<|im-assistant|>
+{self.prompt_dict["assistant"]}"""
         return prompt
 
-    async def request(self, data: dict, max_length: int = 64000, timeout: int = 300, tries: int = 100) -> str:
+    async def request(self, data: dict, max_length: int = 64000, timeout: int = 300, tries: int = 10) -> str:
         data["max_length"] = max_length
         
         try:
@@ -106,17 +104,20 @@ class Agent:
 
 if __name__ == "__main__":
     import asyncio
-    from aigent.tools.get_prompt_info import get_prompt_data
+    from aigent.tools.get_prompt_info import get_prompt_dict
 
-    agent_name: str = "create_task_list"
-    prompt_list: list[str] = get_prompt_data(agent_name)
+    agent_name: str = "fit_evaluation"
+    prompt_dict: dict = get_prompt_dict(agent_name)
+    agent: Agent = Agent(prompt_dict)
+    user_input: str = input("Enter your input: ")
+    response = asyncio.run(agent.process(user_input))
     
-    agent = Agent(prompt_list)
-    response = asyncio.run(agent.process(input("Enter your input: ")))
-    
+    parsed_response: dict = {}
     try:
         parsed_response = json.loads(response)
-        response = json.dumps(parsed_response, indent=2)
     except json.JSONDecodeError:
-        pass
+        print("Failed to parse the response as JSON.")
+    if parsed_response != {}: response = json.dumps(parsed_response, indent=4)
+
+
     print(response)
