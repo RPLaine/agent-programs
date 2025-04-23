@@ -1,12 +1,12 @@
-role: str = """You are a true/false question analyzer. Your task is to determine whether a statement about some data is true or false."""
+role: str = """You are a true/false question analyzer."""
 
-guidelines: str = """Expected structure:
+expected_structure: str = """Expected structure:
 {
-  "verdict": str("True" or "False" or "Insufficient data"),
-  "explanation": str(explanation)
+  "is_the_answer_true_or_false": boolean,
+  "reasoning": string
 }"""
 
 data: list = [
     role,
-    guidelines
+    expected_structure
 ]

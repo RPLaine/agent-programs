@@ -1,8 +1,7 @@
 import os
 import importlib
-from typing import List, Any, Optional
 
-def get_prompt_filenames() -> List[str]:
+def get_prompt_filenames() -> list[str]:
     try:
         import aigent.prompts as prompts_package
         prompts_dir = os.path.dirname(prompts_package.__file__)
@@ -16,7 +15,7 @@ def get_prompt_filenames() -> List[str]:
         print("Error: aigent.prompts package not found")
         return []
 
-def get_prompt_data(filename: str) -> Optional[List[Any]]:
+def get_prompt_data(filename: str) -> list[str]:
     module_path = f"aigent.prompts.{filename}"
     try:
         module = importlib.import_module(module_path)
@@ -24,13 +23,13 @@ def get_prompt_data(filename: str) -> Optional[List[Any]]:
             return module.data
         else:
             print(f"Warning: No 'data' list found in {filename}")
-            return None
+            return []
     except ImportError:
         print(f"Error: Could not import module {module_path}")
-        return None
+        return []
     except AttributeError:
         print(f"Error: Module {module_path} does not have a 'data' attribute")
-        return None
+        return []
 
 if __name__ == "__main__":
     prompt_files = get_prompt_filenames()

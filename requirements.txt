@@ -7,3 +7,4 @@ mimetypes-magic==0.4.30
 selenium==4.31.0
 webdriver-manager==4.0.2
 pandas==2.2.3
+aiohttp==3.11.18
