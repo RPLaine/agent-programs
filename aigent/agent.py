@@ -133,10 +133,8 @@ async def aggregation(count: int, data: dict) -> dict:
             pass
         i += 1
 
-    # Search all the keys in the response_dict["responses"] and add them to a new list
     response_dict["keys"] = list(set([key for response in response_dict["responses"] for key in response.keys()]))
 
-    # Search all the values in the response_dict["responses"] for all the keys in response_dict["keys"] and add them to response_dict["values"][key]
     response_dict["values"] = {}
     for key in response_dict["keys"]:
         response_dict["values"][key] = []
@@ -144,10 +142,8 @@ async def aggregation(count: int, data: dict) -> dict:
             if key in response.keys():
                 response_dict["values"][key].append(response[key])
 
-    # If all list values in response_dict["values"][key] are number, calculate the statistics
     for key in response_dict["keys"]:
         if all(isinstance(value, (int, float)) for value in response_dict["values"][key]):
-            # Convert the list to a dictionary with 'values' and statistics
             values_list = response_dict["values"][key]
             response_dict["values"][key] = {
                 "values": values_list,
@@ -158,7 +154,6 @@ async def aggregation(count: int, data: dict) -> dict:
                 "max": max(values_list)
             }
         else:
-            # values_list_to_string = ", ".join([str(value) for value in response_dict["values"][key]])
             summary_response = await main("summarize", json.dumps(response_dict["values"][key]))
             response_dict["values"][key] = {
                 "values": response_dict["values"][key],
@@ -167,16 +162,24 @@ async def aggregation(count: int, data: dict) -> dict:
 
     return response_dict
 
-async def how_response_fit_request(user_request: str, assistant_response: str) -> dict:
+async def how_response_fit_request(user_request: str = "", assistant_response: str = "", iteration_count: int = 5) -> dict:
     data = {
         "agent_name": "fit_evaluation",
         "user_input": f"Request: {user_request} \n\nResponse: {assistant_response}"
     }
 
-    response: dict = await aggregation(5, data)
+    response: dict = await aggregation(iteration_count, data)
     return response
 
 
 if __name__ == "__main__":
-    response: dict = asyncio.run(how_response_fit_request("Do you think that I should create AGI?", "It is a really good idea."))
+    # Example usage
+
+    data: dict = {
+        "request": "Do you think that I should create AGI?",
+        "response": "It is a really good idea, beacuse AGI can help us to solve many problems. For example, we can use AGI to solve the climate change problem. AGI can help us to find new energy sources, and it can help us to find new ways to reduce the CO2 emissions.",
+        "iteration_count": 5,
+    }
+
+    response: dict = asyncio.run(how_response_fit_request(data["request"], data["response"], data["iteration_count"]))
     print(json.dumps(response, indent=4))
