@@ -5,7 +5,7 @@ Is the Response a good response in relation to the Request?
 Respond in JSON format:
 {
     "evaluation": float,
-    "reason": string
+    "reasoning": string
 }
 
 Use only given keys.
