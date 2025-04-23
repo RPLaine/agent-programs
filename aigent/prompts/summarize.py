@@ -1,19 +1,15 @@
 system: str = """
-Evaluate only how fitting the Response is for the Request.
-Is the Response a good response in relation to the Request?
+Summarize the user message into informative text.
+What is shared between different sentiments?
+What are the main differences between the sentiments?
+"""
 
-Respond in JSON format:
-{
-    "evaluation": float,
-    "reason": string
-}
-
-Use only given keys.
+user: str = """
+Summarize the following content:
 """
 
 assistant_start: str = """
-{
-    "evaluation": """
+"""
 
 prompt_dict: dict = {
     "system": system,

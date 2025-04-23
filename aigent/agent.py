@@ -2,9 +2,11 @@ import os
 import time
 import uuid
 import json
-import aiohttp
+import aiohttp    
+import asyncio
 
 import aigent.settings as settings
+from aigent.tools.get_prompt_info import get_prompt_dict
 
 class Agent:
     def __init__(
@@ -68,6 +70,7 @@ class Agent:
 <|im-end|>
 <|im-user|>
 {user_input}
+{self.prompt_dict["user"]}
 <|im-end|>
 <|im-assistant|>
 {self.prompt_dict["assistant"]}"""
@@ -101,16 +104,12 @@ class Agent:
             response_text = response_text.replace(token, "")
         return response_text.strip()
 
-
-if __name__ == "__main__":
-    import asyncio
-    from aigent.tools.get_prompt_info import get_prompt_dict
-
-    agent_name: str = "fit_evaluation"
+async def main(agent_name: str, user_input: str = "") -> str:
     prompt_dict: dict = get_prompt_dict(agent_name)
     agent: Agent = Agent(prompt_dict)
-    user_input: str = input("Enter your input: ")
-    response = asyncio.run(agent.process(user_input))
+    if user_input == "":
+        user_input = input("Enter your input: ")
+    response = await agent.process(user_input)
     
     parsed_response: dict = {}
     try:
@@ -119,5 +118,64 @@ if __name__ == "__main__":
         print("Failed to parse the response as JSON.")
     if parsed_response != {}: response = json.dumps(parsed_response, indent=4)
 
+    return response
 
-    print(response)
+async def aggregation(count: int, data: dict) -> dict:
+    response_dict = {}
+    response_dict["responses"] = []
+    i = 0
+    while i < count:
+        response = await main(data["agent_name"], data["user_input"])
+        try:
+            parsed_response = json.loads(response)
+            response_dict["responses"].append(parsed_response)
+        except json.JSONDecodeError:
+            pass
+        i += 1
+
+    # Search all the keys in the response_dict["responses"] and add them to a new list
+    response_dict["keys"] = list(set([key for response in response_dict["responses"] for key in response.keys()]))
+
+    # Search all the values in the response_dict["responses"] for all the keys in response_dict["keys"] and add them to response_dict["values"][key]
+    response_dict["values"] = {}
+    for key in response_dict["keys"]:
+        response_dict["values"][key] = []
+        for response in response_dict["responses"]:
+            if key in response.keys():
+                response_dict["values"][key].append(response[key])
+
+    # If all list values in response_dict["values"][key] are number, calculate the statistics
+    for key in response_dict["keys"]:
+        if all(isinstance(value, (int, float)) for value in response_dict["values"][key]):
+            # Convert the list to a dictionary with 'values' and statistics
+            values_list = response_dict["values"][key]
+            response_dict["values"][key] = {
+                "values": values_list,
+                "average": sum(values_list) / len(values_list),
+                "median": sorted(values_list)[len(values_list) // 2],
+                "mode": max(set(values_list), key=values_list.count),
+                "min": min(values_list),
+                "max": max(values_list)
+            }
+        else:
+            # values_list_to_string = ", ".join([str(value) for value in response_dict["values"][key]])
+            summary_response = await main("summarize", json.dumps(response_dict["values"][key]))
+            response_dict["values"][key] = {
+                "values": response_dict["values"][key],
+                "summary": summary_response
+            }
+
+    return response_dict
+
+
+if __name__ == "__main__":
+    # response = asyncio.run(main("fit_evaluation", "Request: I should flip over the table. Response: It is a really good idea."))
+    # print(response)
+
+    data = {
+        "agent_name": "fit_evaluation",
+        "user_input": "Request: What is the purpose of life? Response: To be purposeful."
+    }
+
+    response: dict = asyncio.run(aggregation(5, data))
+    print(json.dumps(response, indent=4))
