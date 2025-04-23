@@ -112,7 +112,6 @@ if __name__ == "__main__":
     prompt_list: list[str] = get_prompt_data(agent_name)
     
     agent = Agent(prompt_list)
-    user_input = "Who are you?"
     response = asyncio.run(agent.process(input("Enter your input: ")))
     
     try:
