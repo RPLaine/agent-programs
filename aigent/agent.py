@@ -167,15 +167,16 @@ async def aggregation(count: int, data: dict) -> dict:
 
     return response_dict
 
-
-if __name__ == "__main__":
-    # response = asyncio.run(main("fit_evaluation", "Request: I should flip over the table. Response: It is a really good idea."))
-    # print(response)
-
+async def how_response_fit_request(user_request: str, assistant_response: str) -> dict:
     data = {
         "agent_name": "fit_evaluation",
-        "user_input": "Request: What is the purpose of life? Response: To be purposeful."
+        "user_input": f"Request: {user_request} \n\nResponse: {assistant_response}"
     }
 
-    response: dict = asyncio.run(aggregation(5, data))
+    response: dict = await aggregation(5, data)
+    return response
+
+
+if __name__ == "__main__":
+    response: dict = asyncio.run(how_response_fit_request("Do you think that I should create AGI?", "It is a really good idea."))
     print(json.dumps(response, indent=4))
