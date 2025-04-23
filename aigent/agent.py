@@ -147,17 +147,17 @@ async def aggregation(count: int, data: dict) -> dict:
             values_list = response_dict["values"][key]
             response_dict["values"][key] = {
                 "values": values_list,
-                "average": sum(values_list) / len(values_list),
+                "average": round(sum(values_list) / len(values_list), 2), # Limited to 2 decimal places
                 "median": sorted(values_list)[len(values_list) // 2],
                 "mode": max(set(values_list), key=values_list.count),
                 "min": min(values_list),
                 "max": max(values_list)
             }
         else:
-            summary_response = await main("summarize", json.dumps(response_dict["values"][key]))
+            summary_response = await main("analyze_sentiments", json.dumps(response_dict["values"][key]))
             response_dict["values"][key] = {
                 "values": response_dict["values"][key],
-                "summary": summary_response
+                "analysis": summary_response
             }
 
     return response_dict
@@ -176,8 +176,8 @@ if __name__ == "__main__":
     # Example usage
 
     data: dict = {
-        "request": "Do you think that I should create AGI?",
-        "response": "It is a really good idea, beacuse AGI can help us to solve many problems. For example, we can use AGI to solve the climate change problem. AGI can help us to find new energy sources, and it can help us to find new ways to reduce the CO2 emissions.",
+        "request": "I heard that the Earth is round. Is that true?",
+        "response": "It is true that the Earth is round. This has been proven by various scientific methods, including satellite imagery and observations from space.",
         "iteration_count": 5,
     }
 
