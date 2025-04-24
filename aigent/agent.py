@@ -3,10 +3,8 @@ import time
 import uuid
 import json
 import aiohttp    
-import asyncio
 
 import aigent.settings as settings
-from aigent.tools.get_prompt_info import get_prompt_dict
 
 class Agent:
     def __init__(
@@ -59,7 +57,7 @@ class Agent:
 
     def create_system_prompt(self) -> str:
         system_prompt: str = settings.data[0]
-        system_prompt += self.prompt_dict['system']
+        system_prompt += self.prompt_dict['system'] if 'system' in self.prompt_dict else ""
         system_prompt += settings.data[1]
         return system_prompt
 
@@ -70,10 +68,10 @@ class Agent:
 <|im-end|>
 <|im-user|>
 {user_input}
-{self.prompt_dict["user"]}
+{self.prompt_dict["user"] if "user" in self.prompt_dict else ""}
 <|im-end|>
 <|im-assistant|>
-{self.prompt_dict["assistant"]}"""
+{self.prompt_dict["assistant"] if "assistant" in self.prompt_dict else ""}"""
         return prompt
 
     async def request(self, data: dict, max_length: int = 64000, timeout: int = 300, tries: int = 10) -> str:
@@ -103,83 +101,3 @@ class Agent:
         for token in special_tokens:
             response_text = response_text.replace(token, "")
         return response_text.strip()
-
-async def main(agent_name: str, user_input: str = "") -> str:
-    prompt_dict: dict = get_prompt_dict(agent_name)
-    agent: Agent = Agent(prompt_dict)
-    if user_input == "":
-        user_input = input("Enter your input: ")
-    response = await agent.process(user_input)
-    
-    parsed_response: dict = {}
-    try:
-        parsed_response = json.loads(response)
-    except json.JSONDecodeError:
-        print("Failed to parse the response as JSON.")
-    if parsed_response != {}: response = json.dumps(parsed_response, indent=4)
-
-    return response
-
-async def aggregation(count: int, data: dict) -> dict:
-    response_dict = {}
-    response_dict["responses"] = []
-    i = 0
-    while i < count:
-        response = await main(data["agent_name"], data["user_input"])
-        try:
-            parsed_response = json.loads(response)
-            response_dict["responses"].append(parsed_response)
-        except json.JSONDecodeError:
-            pass
-        i += 1
-
-    response_dict["keys"] = list(set([key for response in response_dict["responses"] for key in response.keys()]))
-
-    response_dict["values"] = {}
-    for key in response_dict["keys"]:
-        response_dict["values"][key] = []
-        for response in response_dict["responses"]:
-            if key in response.keys():
-                response_dict["values"][key].append(response[key])
-
-    for key in response_dict["keys"]:
-        if all(isinstance(value, (int, float)) for value in response_dict["values"][key]):
-            values_list = response_dict["values"][key]
-            response_dict["values"][key] = {
-                "values": values_list,
-                "average": round(sum(values_list) / len(values_list), 2), # Limited to 2 decimal places
-                "median": sorted(values_list)[len(values_list) // 2],
-                "mode": max(set(values_list), key=values_list.count),
-                "min": min(values_list),
-                "max": max(values_list)
-            }
-        else:
-            summary_response = await main("analyze_sentiments", json.dumps(response_dict["values"][key]))
-            response_dict["values"][key] = {
-                "values": response_dict["values"][key],
-                "analysis": summary_response
-            }
-
-    return response_dict
-
-async def how_response_fit_request(user_request: str = "", assistant_response: str = "", iteration_count: int = 5) -> dict:
-    data = {
-        "agent_name": "fit_evaluation",
-        "user_input": f"Request: {user_request} \n\nResponse: {assistant_response}"
-    }
-
-    response: dict = await aggregation(iteration_count, data)
-    return response
-
-
-if __name__ == "__main__":
-    # Example usage
-
-    data: dict = {
-        "request": "I heard that the Earth is round. Is that true?",
-        "response": "It is true that the Earth is round. This has been proven by various scientific methods, including satellite imagery and observations from space.",
-        "iteration_count": 5,
-    }
-
-    response: dict = asyncio.run(how_response_fit_request(data["request"], data["response"], data["iteration_count"]))
-    print(json.dumps(response, indent=4))

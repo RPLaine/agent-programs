@@ -1,16 +1,25 @@
-objective: str = """
-** Objective **
-What is the answer to the user message?
-"""
+system: str = """
+Answer the question.
+What is the best answer for the question?
 
-expected_structure: str = """
-** Expected structure **
+Respond in JSON format:
 {
-    "answer_for_the_user": str(response)
+    "answer_for_the_user": string
 }
+
+Use only given keys.
 """
 
-data: list = [
-    objective,
-    expected_structure
-]
+assistant_start: str = """
+{
+    "answer_for_the_user": """
+
+prompt_dict: dict = {
+    "system": system,
+    "user": "",
+    "assistant": assistant_start
+}
+
+if __name__ == "__main__":
+    for key, value in prompt_dict.items():
+        print(f"{key}: {value}")

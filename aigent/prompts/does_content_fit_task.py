@@ -1,20 +1,19 @@
 system: str = """
-Create a task list from the request.
-In what ordered tasks can be derived?
+Evaluate only how fitting the CONTENT is for the TASK.
+How easy it is to execute the TASK based on the CONTENT?
 
+Respond in JSON format:
 {
-  "tasks_from_user_input": [
-    string,
-    string,
-    string,
-    ...
-  ]
+    "evaluation": float,
+    "reasoning": string
 }
+
+Use only given keys.
 """
 
 assistant_start: str = """
 {
-  "tasks_from_user_input": ["""
+    "evaluation": """
 
 prompt_dict: dict = {
     "system": system,

@@ -1,5 +1,4 @@
 import aigent.tools.get_prompt_info as get_prompt_info
-import json
 import os
 
 def get_current_file_name_without_extention() -> str:
@@ -12,8 +11,10 @@ Choose an agent that would serve the user request.
 
 Respond in JSON format:
 {
-    "helpful_agent_for_the_user_message": one agent name from the list of agents
+    "useful_agent_for_the_user_message": one agent name from the list of agents
 }
+
+Use only given keys.
 """
 
 agents: list = get_prompt_info.get_prompt_filenames()
