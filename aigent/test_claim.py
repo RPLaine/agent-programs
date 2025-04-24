@@ -1,26 +1,5 @@
 import json
-from aigent.agent import Agent
-from aigent.tools.get_prompt_info import get_prompt_dict
-
-
-async def run_agent_process(agent_name: str, user_input: str = "") -> str:
-    prompt_dict: dict = get_prompt_dict(agent_name)
-    agent: Agent = Agent(prompt_dict)
-    if user_input == "":
-        user_input = input("Enter your input: ")
-    response = await agent.process(user_input)
-    
-    parsed_response: dict = {}
-    try:
-        parsed_response = json.loads(response)
-        return json.dumps(parsed_response, indent=4)
-    except json.JSONDecodeError:
-        print("-" * 20)
-        print("Failed to parse the response as JSON.")
-        print("Response:")
-        print(response)
-        print("-" * 20)
-        return response
+from aigent.agent import run_agent_process
 
 
 async def aggregate_responses(count: int, data: dict) -> dict:
@@ -81,7 +60,7 @@ async def does_evaluation_fit_content(content: str = "", claim: str = "", iterat
     return response
 
 
-async def test_multiple_possibilities(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
+async def main(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
     possibilities: list = []
     while True:
         i: int = 0
@@ -120,8 +99,8 @@ async def test_multiple_possibilities(content: str = "", claim: str = "", iterat
     best_claim_obj = max(evaluations["summary"]["claims"], key=lambda x: x["value"]) if evaluations["summary"]["claims"] else None
     evaluations["final"] = {
         "content": content,
-        "claim": best_claim_obj["claim"] if best_claim_obj else None,
-        "value": best_claim_obj["value"] if best_claim_obj else None,
+        "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
+        "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
         "analysis": best_claim_obj["analysis"] if best_claim_obj else None
     }
     
@@ -136,7 +115,7 @@ if __name__ == "__main__":
     iterations: int = 3
 
     print(json.dumps(asyncio.run(
-        test_multiple_possibilities(
+        main(
             content, 
             claim, 
             iterations

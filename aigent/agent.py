@@ -5,6 +5,7 @@ import json
 import aiohttp    
 
 import aigent.settings as settings
+from aigent.tools.get_prompt_info import get_prompt_dict
 
 class Agent:
     def __init__(
@@ -101,3 +102,23 @@ class Agent:
         for token in special_tokens:
             response_text = response_text.replace(token, "")
         return response_text.strip()
+
+
+async def run_agent_process(agent_name: str, user_input: str = "") -> str:
+    prompt_dict: dict = get_prompt_dict(agent_name)
+    agent: Agent = Agent(prompt_dict)
+    if user_input == "":
+        user_input = input("Enter your input: ")
+    response = await agent.process(user_input)
+    
+    parsed_response: dict = {}
+    try:
+        parsed_response = json.loads(response)
+        return json.dumps(parsed_response, indent=4)
+    except json.JSONDecodeError:
+        print("-" * 20)
+        print("Failed to parse the response as JSON.")
+        print("Response:")
+        print(response)
+        print("-" * 20)
+        return response
