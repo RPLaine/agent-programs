@@ -1,4 +1,4 @@
-concept: str = "'VALUE'"
+concept: str = "VALUE"
 
 system: str = """
 Create a list of possiblities from the """ + concept + """.
@@ -6,10 +6,10 @@ Create a list of possiblities from the """ + concept + """.
 Respond in JSON format:
 {
     "possibilities": [
-        "The content is """ + concept + """ and fully meets the requirements.",
-        "The content is """ + concept + """ but needs some improvements.",
-        "The content is not """ + concept + """ yet, but could be modified to meet this criterion.",
-        "The content is not """ + concept + """ and cannot be reasonably modified to meet this criterion."
+        "True: The content is """ + concept + """ and fully meets the requirements.",
+        "True: The content is """ + concept + """ but needs some improvements.",
+        "False: The content is not """ + concept + """ yet, but could be modified to meet this criterion.",
+        "False: The content is not """ + concept + """ and cannot be reasonably modified to meet this criterion."
     ]
 }
 
@@ -19,7 +19,7 @@ Change only the """ + concept + """ to the given KEY.
 assistant_start: str = """
 {
     "possibilities": [
-        "It is TRUE that content is"""
+        "True. The content is"""
 
 prompt_dict: dict = {
     "system": system,

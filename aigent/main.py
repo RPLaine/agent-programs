@@ -1,9 +1,9 @@
 import json
 from aigent.agent import Agent
-from aigent.tools.get_prompt_info import get_prompt_dict, get_prompt_data, get_prompt_filenames
-import aigent.settings as settings
+from aigent.tools.get_prompt_info import get_prompt_dict
 
-async def main(agent_name: str, user_input: str = "") -> str:
+
+async def run_agent_process(agent_name: str, user_input: str = "") -> str:
     prompt_dict: dict = get_prompt_dict(agent_name)
     agent: Agent = Agent(prompt_dict)
     if user_input == "":
@@ -13,18 +13,22 @@ async def main(agent_name: str, user_input: str = "") -> str:
     parsed_response: dict = {}
     try:
         parsed_response = json.loads(response)
+        return json.dumps(parsed_response, indent=4)
     except json.JSONDecodeError:
+        print("-" * 20)
         print("Failed to parse the response as JSON.")
-    if parsed_response != {}: response = json.dumps(parsed_response, indent=4)
+        print("Response:")
+        print(response)
+        print("-" * 20)
+        return response
 
-    return response
 
-async def aggregation(count: int, data: dict) -> dict:
+async def aggregate_responses(count: int, data: dict) -> dict:
     response_dict = {}
     response_dict["responses"] = []
     i = 0
     while i < count:
-        response = await main(data["agent_name"], data["user_input"])
+        response = await run_agent_process(data["agent_name"], data["user_input"])
         try:
             parsed_response = json.loads(response)
             response_dict["responses"].append(parsed_response)
@@ -58,7 +62,7 @@ async def aggregation(count: int, data: dict) -> dict:
                 "max": max(values_list)
             }
         else:
-            summary_response = await main("analyze_sentiments", json.dumps(response_dict["values"][key]))
+            summary_response = await run_agent_process("analyze_sentiments", json.dumps(response_dict["values"][key]))
             response_dict["values"][key] = {
                 "values": response_dict["values"][key],
                 "analysis": summary_response
@@ -66,40 +70,18 @@ async def aggregation(count: int, data: dict) -> dict:
 
     return response_dict
 
-def create_system_prompt(prompt_dict: dict) -> str:
-    system_prompt: str = settings.data[0]
-    system_prompt += prompt_dict['system'] if 'system' in prompt_dict else ""
-    system_prompt += settings.data[1]
-    return system_prompt
 
-async def does_response_fit_request(user_request: str = "", assistant_response: str = "", iteration_count: int = 5) -> dict:
-    data = {
-        "agent_name": "does_response_fit_request",
-        "user_input": f"Request: {user_request} \n\nResponse: {assistant_response}"
-    }
-
-    response: dict = await aggregation(iteration_count, data)
-    return response
-
-async def does_content_fit_task(content: str = "", task: str = "", iteration_count: int = 5) -> dict:
-    data_export = {
-        "agent_name": "does_content_fit_task",
-        "user_input": f"CONTENT:\n{content}\n\nTASK:\n{task}"
-    }
-
-    response: dict = await aggregation(iteration_count, data_export)
-    return response
-
-async def does_evaluation_fit_content(content: str = "", evaluation: str = "", iteration_count: int = 5) -> dict:
+async def does_evaluation_fit_content(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
     data_export = {
         "agent_name": "does_evaluation_fit_content",
-        "user_input": f"CONTENT:\n{content}\n\nEVALUATION:\n{evaluation}"
+        "user_input": f"CONTENT: '{content}'\nCLAIM: '{claim}'"
     }
 
-    response: dict = await aggregation(iteration_count, data_export)
+    response: dict = await aggregate_responses(iteration_count, data_export)
     return response
 
-async def test_multiple_possibilities(content: str = "", concept: str = "", iteration_count: int = 5) -> dict:
+
+async def test_multiple_possibilities(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
     possibilities: list = []
     while True:
         i: int = 0
@@ -108,7 +90,7 @@ async def test_multiple_possibilities(content: str = "", concept: str = "", iter
                 "error": "Could not create possibilities from keyword."
             }
         try:
-            possibilities_str: str = await main("create_possibilities_from_keyword", "'KEY': '" + concept + "'")
+            possibilities_str: str = await run_agent_process("create_possibilities_from_keyword", "VALUE: '" + claim + "'")
             possibilities_dict: dict = json.loads(possibilities_str)
             possibilities = possibilities_dict["possibilities"]
             break
@@ -127,19 +109,19 @@ async def test_multiple_possibilities(content: str = "", concept: str = "", iter
 
     i: int = 0
     for key in evaluations.keys():
-        if "values" in evaluations[key] and "assessment" in evaluations[key]["values"] and "reasoning" in evaluations[key]["values"]:
+        if "values" in evaluations[key] and "value" in evaluations[key]["values"] and "reasoning" in evaluations[key]["values"]:
             evaluations["summary"]["claims"].append({
                 "claim": key,
-                "fit": evaluations[key]["values"]["assessment"]["average"] if "average" in evaluations[key]["values"]["assessment"] else "",
+                "value": evaluations[key]["values"]["value"]["average"] if "average" in evaluations[key]["values"]["value"] else "",
                 "analysis": evaluations[key]["values"]["reasoning"]["analysis"] if "analysis" in evaluations[key]["values"]["reasoning"] else ""
             })
         i += 1
 
-    best_claim_obj = max(evaluations["summary"]["claims"], key=lambda x: x["fit"]) if evaluations["summary"]["claims"] else None
+    best_claim_obj = max(evaluations["summary"]["claims"], key=lambda x: x["value"]) if evaluations["summary"]["claims"] else None
     evaluations["final"] = {
         "content": content,
         "claim": best_claim_obj["claim"] if best_claim_obj else None,
-        "fit": best_claim_obj["fit"] if best_claim_obj else None,
+        "value": best_claim_obj["value"] if best_claim_obj else None,
         "analysis": best_claim_obj["analysis"] if best_claim_obj else None
     }
     
@@ -147,14 +129,15 @@ async def test_multiple_possibilities(content: str = "", concept: str = "", iter
 
 
 if __name__ == "__main__":
-    import asyncio
+    import asyncio # important for async functions
 
-    # content: str = "I noticed this morning that I might have some odd rash on my arm. I think it might be a rash, but I'm not sure. I don't know if I should go to the doctor or not. Can you help me figure out what to do?"
     content: str = "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time."
-    concept: str = "a good news article"
-    # print(json.loads(asyncio.run(main("create_possibilities_from_keyword", "'KEY': '" + keyword + "'"))))
-    print(json.dumps(asyncio.run(test_multiple_possibilities(content, concept)), indent=4))
+    claim: str = "a good news article"
+    iterations: int = 3
 
-    # Example for does_response_fit_request
-    # response: dict = asyncio.run(does_content_fit_task(data["content"], data["task"], data["iteration_count"]))
-    # print(json.dumps(response, indent=4))
+    print(json.dumps(asyncio.run(
+        test_multiple_possibilities(
+            content, 
+            claim, 
+            iterations
+            )), indent=4))

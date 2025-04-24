@@ -1,13 +1,13 @@
 evaluation_concept: str = "truthful"
 
 system: str = f"""
-Assess how """ + evaluation_concept + """ the EVALUATION is of the CONTENT.
-Does the EVALUATION describe the CONTENT well?
+Assess how """ + evaluation_concept + """ the CLAIM is of the CONTENT.
+Is the CLAIM """ + evaluation_concept +  """CONTENT?
 
 Respond in JSON format:
 {
-    "assessment": float, # A value between 0.0 and 1.0 where 0.0 means not """ + evaluation_concept + """ at all and 1.0 means perfectly """ + evaluation_concept + """.
-    "reasoning": string
+    "value": float, # A value between 0.0 and 1.0 where 0.0 means not """ + evaluation_concept + """ at all and 1.0 means perfectly """ + evaluation_concept + """.
+    "reasoning": string # use ""
 }
 
 Use only given keys.
@@ -15,7 +15,7 @@ Use only given keys.
 
 assistant_start: str = """
 {
-    "assessment": """
+    "value": """
 
 prompt_dict: dict = {
     "system": system,
