@@ -2,7 +2,7 @@ evaluation_concept: str = "truthful"
 
 system: str = f"""
 Assess how """ + evaluation_concept + """ the CLAIM is of the CONTENT.
-Is the CLAIM """ + evaluation_concept +  """CONTENT?
+Is the CLAIM """ + evaluation_concept +  """ of the CONTENT?
 
 Respond in JSON format:
 {

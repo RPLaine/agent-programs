@@ -60,7 +60,7 @@ async def does_evaluation_fit_content(content: str = "", claim: str = "", iterat
     return response
 
 
-async def main(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
+async def main(content: str = "", intention: str = "", iteration_count: int = 5) -> dict:
     possibilities: list = []
     while True:
         i: int = 0
@@ -69,7 +69,7 @@ async def main(content: str = "", claim: str = "", iteration_count: int = 5) -> 
                 "error": "Could not create possibilities from keyword."
             }
         try:
-            possibilities_str: str = await run_agent_process("create_possibilities_from_keyword", "VALUE: '" + claim + "'")
+            possibilities_str: str = await run_agent_process("create_possibilities_from_keyword", "VALUE: '" + intention + "'")
             possibilities_dict: dict = json.loads(possibilities_str)
             possibilities = possibilities_dict["possibilities"]
             break
@@ -83,25 +83,60 @@ async def main(content: str = "", claim: str = "", iteration_count: int = 5) -> 
 
     evaluations["summary"] = {
         "content": content,
-        "claims": []
+        "claims": [],
+        "statistics": {
+            "average": 0,
+            "median": 0,
+            "mode": 0,
+            "min": 0,
+            "max": 0
+        }
     }
 
     i: int = 0
     for key in evaluations.keys():
         if "values" in evaluations[key] and "value" in evaluations[key]["values"] and "reasoning" in evaluations[key]["values"]:
             evaluations["summary"]["claims"].append({
+                "rank": i,
+                "intention": intention,
                 "claim": key,
                 "value": evaluations[key]["values"]["value"]["average"] if "average" in evaluations[key]["values"]["value"] else "",
                 "analysis": evaluations[key]["values"]["reasoning"]["analysis"] if "analysis" in evaluations[key]["values"]["reasoning"] else ""
             })
         i += 1
 
+    if evaluations["summary"]["claims"]:
+        values = [claim["value"] for claim in evaluations["summary"]["claims"] if isinstance(claim["value"], (int, float))]
+        
+        if values:
+            value_counts = {}
+            for value in values:
+                if value in value_counts:
+                    value_counts[value] += 1
+                else:
+                    value_counts[value] = 1
+            
+            max_frequency = max(value_counts.values())
+            modes = [value for value, count in value_counts.items() if count == max_frequency]
+            
+            evaluations["summary"]["statistics"] = {
+                "average": round(sum(values) / len(values), 2),
+                "median": sorted(values)[len(values) // 2],
+                "mode": modes[0] if modes else None,  # Return the first mode if modes exist, otherwise None
+                "min": min(values),
+                "max": max(values)
+            }
+
     best_claim_obj = max(evaluations["summary"]["claims"], key=lambda x: x["value"]) if evaluations["summary"]["claims"] else None
     evaluations["final"] = {
+        "intention": intention,
         "content": content,
-        "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
-        "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
-        "analysis": best_claim_obj["analysis"] if best_claim_obj else None
+        "evaluation": {
+            "best_claim": best_claim_obj["claim"] if best_claim_obj else None,
+            "truth_value": best_claim_obj["value"] if best_claim_obj else None
+        },
+        "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
+        "rank": best_claim_obj["rank"] if best_claim_obj else None
     }
     
     return evaluations
@@ -111,12 +146,12 @@ if __name__ == "__main__":
     import asyncio # important for async functions
 
     content: str = "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time."
-    claim: str = "a good news article"
+    intention: str = "a good news article"
     iterations: int = 3
 
     print(json.dumps(asyncio.run(
         main(
             content, 
-            claim, 
+            intention, 
             iterations
             )), indent=4))

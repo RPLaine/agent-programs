@@ -116,9 +116,4 @@ async def run_agent_process(agent_name: str, user_input: str = "") -> str:
         parsed_response = json.loads(response)
         return json.dumps(parsed_response, indent=4)
     except json.JSONDecodeError:
-        print("-" * 20)
-        print("Failed to parse the response as JSON.")
-        print("Response:")
-        print(response)
-        print("-" * 20)
         return response
