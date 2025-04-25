@@ -35,6 +35,14 @@ async def sub_task_aggregation(data: dict = {}, iterations: int = 3) -> dict:
     
 
 async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
+    """
+    Keys needed in dictionary:
+    - intention: str
+    - content: str
+    - evaluation: str
+    - evaluation_truth_value: float
+    - analysis: str
+    """
     print("Creating task list...")
     task_list: dict = {}
     validation: dict = {}
@@ -43,8 +51,8 @@ async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
     while i < iterations_max:
         task_list = await create_task_list(import_data)
 
-        print("Validating task list...")
-        validation = await test_claim(json.dumps(task_list), "a good task list", 3)
+        print("Validating task list: Iteration: ", i + 1, " of ", iterations_max)
+        validation = await test_claim(json.dumps(task_list), "a good list of tasks", iterations_max)
 
         rank: int = -1
         tasks: dict = {}
@@ -99,6 +107,7 @@ async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
 if __name__ == "__main__":
     import asyncio # important for async functions
 
+    # Test data
     data: dict = {
         "intention": "a good news article",
         "content": "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time.",

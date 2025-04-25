@@ -7,7 +7,7 @@ from aigent.test_claim import main as test_claim
 from aigent.make_plan import main as make_plan
 # from aigent.execute_plan import main as execute_plan
 
-from input.get_input import intention, content
+from input.global_settings import intention, content, iteration_count
 
 def get_session() -> dict:
     current_time: str = str(time.time()).split(".")[0]
@@ -16,10 +16,7 @@ def get_session() -> dict:
     session: dict = {
         "id": current_time + "-" + id_extension,
         "start_time": current_time,
-        "end_time": None,
-        "intention": intention,
-        "initial_content": content,
-        "iteration_count": 5
+        "end_time": None
     }
 
     return session
@@ -29,7 +26,7 @@ def initialize_data() -> dict:
     data: dict = {
         "intention": intention,
         "content": content,
-        "iteration_count": 5,
+        "iteration_count": iteration_count,
         "session": get_session()
     }
     print("Session initialized.")
@@ -65,9 +62,13 @@ async def main():
     data = initialize_data()
 
     print("Processing...")
-    data["process"] = await test_claim(data["content"], data["intention"], data["iteration_count"])
+    data["test"] = await test_claim(data["content"], data["intention"], data["iteration_count"])
+    data["plan"] = await make_plan(data["test"]["final"], data["iteration_count"])
+    # data["execute"] = await execute_plan(data["plan"]["tasks"]["list"]["tasks_from_content"], data["iteration_count"])
+
 
     finalize_data(data)
+    print(data["plan"]["tasks"]["list"]["tasks_from_content"])
 
 
 

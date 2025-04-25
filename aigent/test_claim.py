@@ -131,10 +131,8 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
     evaluations["final"] = {
         "intention": intention,
         "content": content,
-        "evaluation": {
-            "best_claim": best_claim_obj["claim"] if best_claim_obj else None,
-            "truth_value": best_claim_obj["value"] if best_claim_obj else None
-        },
+        "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
+        "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
         "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
         "rank": best_claim_obj["rank"] if best_claim_obj else None
     }
