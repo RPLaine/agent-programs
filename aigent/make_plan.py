@@ -4,6 +4,7 @@ from aigent.test_claim import main as test_claim
 
 # DONE
 async def create_task_list(data: dict = {}, iterations: int = 3) -> dict:
+    # Build prompt with only available keys
     user_prompt: str = f"""
     INTENTION: {data["intention"]}
 
@@ -12,9 +13,8 @@ async def create_task_list(data: dict = {}, iterations: int = 3) -> dict:
     EVALUATION: {data["evaluation"]}
 
     EVALUATION_TRUTH_VALUE: {data["evaluation_truth_value"]}
-
-    ANALYSIS: {data["analysis"]}
     """
+    
     task_list_dict: dict = {}
     i:  int = 0
     while True:
@@ -41,7 +41,6 @@ async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
     - content: str
     - evaluation: str
     - evaluation_truth_value: float
-    - analysis: str
     """
     print("Creating task list...")
     task_list: dict = {}
@@ -113,7 +112,7 @@ if __name__ == "__main__":
         "content": "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time.",
         "evaluation": "The content is not a good news article yet, but could be modified to meet this criterion.",
         "evaluation_truth_value": 0.77,
-        "analysis": "1. Shared between the sentiments: Both sentiments agree that the content seems to be a personal travelogue rather than a news article. They also acknowledge that the content could be modified to make it more suitable as a news article by adding relevant facts or events.\n\n2. Different between the sentiments: Although both sentiments share similarities, there is a slight difference in their phrasing and choice of words. The first sentiment suggests adding facts or events that occurred during the trip, while the second sentiment mentions adding a newsworthy angle or specific details that make the event or activities noteworthy. The second sentiment emphasizes the importance of finding a newsworthy angle in order to transform the content into a successful news article.",
+        # "analysis" is now optional
         "rank": 0
     }
 
