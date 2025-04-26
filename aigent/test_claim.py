@@ -3,49 +3,36 @@ from aigent.agent import run_agent_process
 
 
 async def aggregate_responses(count: int, data: dict) -> dict:
-    response_dict = {}
+    response_dict: dict = {}
     response_dict["responses"] = []
-    i = 0
+
+    i: int = 0
     while i < count:
-        response = await run_agent_process(data["agent_name"], data["user_input"])
         try:
-            parsed_response = json.loads(response)
-            response_dict["responses"].append(parsed_response)
-        except json.JSONDecodeError:
-            pass
-        i += 1
+            response: float = float(await run_agent_process(data["agent_name"], data["user_input"]))
+            response_dict["responses"].append(response)
+            i += 1  # Only increment if successful
+        except Exception as e:
+            print(f"Error processing response: {e}")
+            continue
 
-    response_dict["keys"] = list(set([key for response in response_dict["responses"] for key in response.keys()]))
-
-    response_dict["values"] = {}
-    for key in response_dict["keys"]:
-        response_dict["values"][key] = []
-        for response in response_dict["responses"]:
-            if key in response.keys():
-                response_dict["values"][key].append(response[key])
-
-    for key in response_dict["keys"]:
-        if all(isinstance(value, (int, float)) for value in response_dict["values"][key]):
-            values_list = response_dict["values"][key]
-            
-            # For floats, cap maximum value at 1.0
-            if all(isinstance(value, float) for value in values_list):
-                values_list = [min(value, 1.0) for value in values_list]
-                
-            response_dict["values"][key] = {
-                "values": values_list,
-                "average": round(sum(values_list) / len(values_list), 2), # Limited to 2 decimal places
-                "median": sorted(values_list)[len(values_list) // 2],
-                "mode": max(set(values_list), key=values_list.count),
-                "min": min(values_list),
-                "max": max(values_list)
-            }
-        else:
-            summary_response = await run_agent_process("analyze_sentiments", json.dumps(response_dict["values"][key]))
-            response_dict["values"][key] = {
-                "values": response_dict["values"][key],
-                "analysis": summary_response
-            }
+    # Since we're working with floats, not dictionaries, simplify the processing
+    values_list = response_dict["responses"]
+    
+    # Cap maximum value at 1.0 if needed
+    values_list = [min(value, 1.0) for value in values_list]
+    
+    # Add a single "value" key for statistics
+    response_dict["values"] = {
+        "value": {
+            "values": values_list,
+            "average": round(sum(values_list) / len(values_list), 2) if values_list else 0,
+            "median": sorted(values_list)[len(values_list) // 2] if values_list else 0,
+            "mode": max(set(values_list), key=values_list.count) if values_list else 0,
+            "min": min(values_list) if values_list else 0,
+            "max": max(values_list) if values_list else 0
+        }
+    }
 
     return response_dict
 
@@ -53,7 +40,7 @@ async def aggregate_responses(count: int, data: dict) -> dict:
 async def does_evaluation_fit_content(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
     data_export = {
         "agent_name": "does_evaluation_fit_content",
-        "user_input": f"CONTENT: '{content}'\nCLAIM: '{claim}'"
+        "user_input": f"CONTENT: '{content}'\n\nCLAIM: '{claim}'"
     }
 
     response: dict = await aggregate_responses(iteration_count, data_export)
@@ -61,12 +48,15 @@ async def does_evaluation_fit_content(content: str = "", claim: str = "", iterat
 
 
 async def main(content: str = "", intention: str = "", iteration_count: int = 5) -> dict:
+    print("\nTesting claim:\nCONTENT: " + content + "\nCLAIM: " + intention)
+    print("\nCreating possibilities...")
+
     possibilities: list = []
     while True:
         i: int = 0
         if i > 5:
             return {
-                "error": "Could not create possibilities from keyword."
+                "error": "Could not create possibilities intention."
             }
         try:
             possibilities_str: str = await run_agent_process("create_possibilities_from_keyword", "VALUE: '" + intention + "'")
@@ -76,6 +66,10 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
         except Exception:
             print("Could not convert possibilities to a list. Retrying...")
             i += 1
+
+    print("Possibilities created.")
+    print(possibilities)
+    print("\nEvaluating possibilities...")
 
     evaluations: dict = {}
     for possibility in possibilities:
@@ -93,15 +87,19 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
         }
     }
 
+    print("Evaluations completed.")
+    print(evaluations)
+    print("\nCreating summary...")
+
     i: int = 0
     for key in evaluations.keys():
-        if "values" in evaluations[key] and "value" in evaluations[key]["values"] and "reasoning" in evaluations[key]["values"]:
+        if "values" in evaluations[key] and "value" in evaluations[key]["values"]: # and "reasoning" in evaluations[key]["values"]:
             evaluations["summary"]["claims"].append({
                 "rank": i,
                 "intention": intention,
                 "claim": key,
-                "value": evaluations[key]["values"]["value"]["average"] if "average" in evaluations[key]["values"]["value"] else "",
-                "analysis": evaluations[key]["values"]["reasoning"]["analysis"] if "analysis" in evaluations[key]["values"]["reasoning"] else ""
+                "value": evaluations[key]["values"]["value"]["average"] if "average" in evaluations[key]["values"]["value"] else ""
+                # "analysis": evaluations[key]["values"]["reasoning"]["analysis"] if "analysis" in evaluations[key]["values"]["reasoning"] else ""
             })
         i += 1
 
@@ -133,9 +131,11 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
         "content": content,
         "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
         "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
-        "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
+        # "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
         "rank": best_claim_obj["rank"] if best_claim_obj else None
     }
+
+    print("Summary created.")
     
     return evaluations
 
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     content: str = "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time."
     intention: str = "a good news article"
-    iterations: int = 3
+    iterations: int = 5
 
     print(json.dumps(asyncio.run(
         main(

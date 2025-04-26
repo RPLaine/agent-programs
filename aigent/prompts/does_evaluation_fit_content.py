@@ -1,21 +1,13 @@
-evaluation_concept: str = "truthful"
-
 system: str = f"""
-Assess how """ + evaluation_concept + """ the CLAIM is of the CONTENT.
-Is the CLAIM """ + evaluation_concept +  """ of the CONTENT?
+Give a float value between 0.00 and 1.00.
+If CLAIM is exactly true about the CONTENT, then the score should be 1.00.
+If CLAIM is not true about the CONTENT, then the score should be 0.00.
+If CLAIM is partially true about the CONTENT, then the score should be between 0.00 and 1.00.
 
-Respond in JSON format:
-{
-    "value": float, # A value between 0.0 and 1.0 where 0.0 means not """ + evaluation_concept + """ at all and 1.0 means perfectly """ + evaluation_concept + """.
-    "reasoning": string # use ""
-}
-
-Use only given keys.
+Return ONLY the float value, without any additional text or explanation.
 """
 
-assistant_start: str = """
-{
-    "value": """
+assistant_start: str = """"""
 
 prompt_dict: dict = {
     "system": system,
