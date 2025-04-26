@@ -9,3 +9,8 @@ data: list = [
     global_system_start_prompt,
     global_system_end_prompt
 ]
+
+settings: dict = {
+    "global_system_start_prompt": global_system_start_prompt,
+    "global_system_end_prompt": global_system_end_prompt,
+}

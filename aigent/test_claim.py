@@ -1,4 +1,5 @@
 import json
+import time
 from aigent.agent import run_agent_process
 
 
@@ -48,6 +49,17 @@ async def does_evaluation_fit_content(content: str = "", claim: str = "", iterat
 
 
 async def main(content: str = "", intention: str = "", iteration_count: int = 5) -> dict:
+    """
+    Main function to test a claim against content.
+    Args:
+        content (str): The content to be evaluated.
+        intention (str): The claim or intention to be tested.
+        iteration_count (int): The number of iterations for evaluation.
+    Returns:
+        dict: A dictionary containing the evaluation results.
+    """
+    start_time = time.time()
+    
     print("\nTesting claim:\nCONTENT: " + content + "\nCLAIM: " + intention)
     print("\nCreating possibilities...")
 
@@ -126,13 +138,15 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
             }
 
     best_claim_obj = max(evaluations["summary"]["claims"], key=lambda x: x["value"]) if evaluations["summary"]["claims"] else None
+    execution_time = time.time() - start_time
     evaluations["final"] = {
         "intention": intention,
         "content": content,
         "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
         "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
         # "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
-        "rank": best_claim_obj["rank"] if best_claim_obj else None
+        "rank": best_claim_obj["rank"] if best_claim_obj else None,
+        "execution_time": execution_time
     }
 
     print("Summary created.")
