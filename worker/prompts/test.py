@@ -26,7 +26,3 @@ prompt_dict: dict = {
     "user": "",
     "assistant": assistant_start
 }
-
-if __name__ == "__main__":
-    for key, value in prompt_dict.items():
-        print(f"{key}: {value}")

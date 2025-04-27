@@ -2,7 +2,7 @@ import os
 import json
 import aiohttp    
 
-import worker.settings as settings
+from worker.settings import settings
 
 class Agent:
     def __init__(
@@ -39,9 +39,9 @@ class Agent:
         os.makedirs(self.output_dir_name, exist_ok=True)
 
     def create_system_prompt(self) -> str:
-        system_prompt: str = settings.data[0]
+        system_prompt: str = settings["agent"]["global_system_start_prompt"]
         system_prompt += self.prompt_dict['system'] if 'system' in self.prompt_dict else ""
-        system_prompt += settings.data[1]
+        system_prompt += settings["agent"]["global_system_end_prompt"]
         return system_prompt
 
     def create_prompt(self, user_input: str = "") -> str:

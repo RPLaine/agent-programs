@@ -2,6 +2,14 @@ from worker.agent import run_agent
 
 
 async def main(data: dict) -> None:
+
+    """
+    Keys needed in dictionary:
+    - claim: str
+    - content: str
+    - iterations: int
+    """
+
     user_prompt: str = f"""
 CONTENT:
 {data["content"]}
@@ -36,6 +44,8 @@ How well does the claim describe the content?
         "stats": stats,
         "value": stats["mean"]
     }
+
+    data["action"] = ""
 
 
 if __name__ == "__main__":

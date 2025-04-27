@@ -1,6 +1,4 @@
 async def save_data(data: dict) -> None:
-    print("Saving session data...")
-
     import json
     import os
     
