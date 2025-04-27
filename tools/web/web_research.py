@@ -1,7 +1,6 @@
 from tools.web.google_search import google_search, get_content, extract_text_from_html
 from tools.summarization import summarization
 from tools.information_distiller import distill_text
-from tools.number_response import get_number
 
 def get_web_research(
     query, 

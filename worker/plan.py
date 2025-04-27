@@ -31,6 +31,8 @@ async def main(data: dict = {}) -> None:
     else:
         data["error"] = "Failed to generate tasks after multiple attempts."
 
+    data["action"] = "work"
+
 
 if __name__ == "__main__":
     import asyncio

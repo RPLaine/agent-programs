@@ -24,7 +24,7 @@ async def main(data: dict) -> None:
         i: int = 0
         while i < data["iterations"]:
             try:
-                tools: str = await run_agent("tools", user_prompt)
+                tools: str = await run_agent("choose_tools", user_prompt)
                 tools_list: list = json.loads(tools)
                 tasks_with_tools.append({
                     "task": task,

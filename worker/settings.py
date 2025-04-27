@@ -15,7 +15,7 @@ settings: dict = {
     "claim": "a publishable news article",
     "content": content,
     "iterations": 5,
-    "pass_value": 0.99,
+    "pass_value": 0.95,
     "session": {
         "id": str(uuid.uuid4()).split("-")[0],
         "time": str(time.time()).split(".")[0],
