@@ -2,17 +2,14 @@ import json
 from aigent.agent import run_agent_process
 from aigent.test_claim import main as test_claim
 
-# DONE
+
 async def create_task_list(data: dict = {}, iterations: int = 3) -> dict:
-    # Build prompt with only available keys
     user_prompt: str = f"""
     INTENTION: {data["intention"]}
 
     CONTENT: {data["content"]}
 
     EVALUATION: {data["evaluation"]}
-
-    EVALUATION_TRUTH_VALUE: {data["evaluation_truth_value"]}
     """
     
     task_list_dict: dict = {}
@@ -40,7 +37,9 @@ async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
     - intention: str
     - content: str
     - evaluation: str
-    - evaluation_truth_value: float
+    - rank: int (0-3)
+    - iterations_max: int (optional, default is 3)
+    - task_list: dict (optional, default is empty dict)
     """
     print("Creating task list...")
     task_list: dict = {}
@@ -103,16 +102,15 @@ async def main(import_data: dict = {}, iterations_max: int = 3) -> dict:
     }
 
 
+
 if __name__ == "__main__":
     import asyncio # important for async functions
 
     # Test data
     data: dict = {
-        "intention": "a good news article",
-        "content": "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time.",
+        "intention": "a complete news article",
+        "content": "Soldiers found near Swedish border",
         "evaluation": "The content is not a good news article yet, but could be modified to meet this criterion.",
-        "evaluation_truth_value": 0.77,
-        # "analysis" is now optional
         "rank": 0
     }
 

@@ -10,16 +10,20 @@ async def get_action(data: dict) -> dict:
     try:
         if data["test"]["result"]["final"]["rank"] == 0:
             data["message"] = "The user input is the desired product."
+            data["action"] = "done"
             print(data["message"])
             return data
         elif data["test"]["result"]["final"]["rank"] == 1:
             data["message"] = "The user input is the desired product but can be improved."
+            data["action"] = "plan"
             print(data["message"])
         elif data["test"]["result"]["final"]["rank"] == 2:
             data["message"] = "The user input is not the desired product but can be improved."
+            data["action"] = "plan"
             print(data["message"])
         elif data["test"]["result"]["final"]["rank"] == 3:
             data["message"] = "The user input is unrelated to desired product."
+            data["action"] = "done"
             print(data["message"])
             return data
         else:
@@ -61,6 +65,23 @@ async def test(data: dict) -> dict:
 
     return data
 
+async def plan(data: dict) -> dict:
+    try:
+        plan_data: dict = {
+            "desired_product": data["desired_product"],
+            "user_input": data["user_input"],
+            "evaluation": data["test"]["result"]["final"]["evaluation"],
+            "iteration_count": data["iteration_count"],
+            "rank": data["test"]["result"]["final"]["rank"]
+        }
+    except:
+        data["error"] = "No data."
+        return data
+    
+    data["plan"] = await request_plan(plan_data)
+
+    return data
+
 
 async def main(data: dict = {}) -> dict:
 
@@ -68,32 +89,32 @@ async def main(data: dict = {}) -> dict:
 
     while True:
 
-        if data["action"] == "test":
+        if data["action"] == "test": 
             data = await test(data)
-        elif data["action"] == "plan":
-            data = await plan(data)
+            return data
+        elif data["action"] == "plan": data = await plan(data)
         elif data["action"] == "work":
-            data = await work(data)
+            # data = await work(data)
+            data["message"] = "Working is not implemented yet."
+            print(data["message"])
+            return data
         elif data["action"] == "done":
+            data["message"] = "Done."
+            print(data["message"])
             break
         else:
             data["error"] = "Unknown action."
             break
 
         data = await get_action(data)
-        
+
     return data
 
 
 
 if __name__ == "__main__":
-    desired_product: str = "a publishable news article"
-    user_input: str = """Soldiers found near Swedish border
-    
-    A group of soldiers has been found near the Swedish border.
-    The soldiers were reportedly on a training exercise when they lost their way and ended up in Sweden.
-    The Swedish authorities have confirmed that the soldiers are safe and have been returned to their unit.
-    """
+    desired_product: str = "a complete news article"
+    user_input: str = "Soldiers found near Swedish border"
 
     data: dict = {
         "desired_product": desired_product,

@@ -41,7 +41,7 @@ async def aggregate_responses(count: int, data: dict) -> dict:
 async def does_evaluation_fit_content(content: str = "", claim: str = "", iteration_count: int = 5) -> dict:
     data_export = {
         "agent_name": "does_evaluation_fit_content",
-        "user_input": f"CONTENT: '{content}'\n\nCLAIM: '{claim}'"
+        "user_input": f"\nCONTENT: '{content}'\n\nCLAIM: '{claim}'"
     }
 
     response: dict = await aggregate_responses(iteration_count, data_export)
@@ -132,7 +132,7 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
             evaluations["summary"]["statistics"] = {
                 "average": round(sum(values) / len(values), 2),
                 "median": sorted(values)[len(values) // 2],
-                "mode": modes[0] if modes else None,  # Return the first mode if modes exist, otherwise None
+                "mode": modes[0] if modes else None,
                 "min": min(values),
                 "max": max(values)
             }
@@ -144,7 +144,7 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
         "content": content,
         "evaluation": best_claim_obj["claim"] if best_claim_obj else None,
         "evaluation_truth_value": best_claim_obj["value"] if best_claim_obj else None,
-        # "analysis": best_claim_obj["analysis"] if best_claim_obj else None,
+
         "rank": best_claim_obj["rank"] if best_claim_obj else None,
         "execution_time": execution_time
     }
@@ -155,7 +155,7 @@ async def main(content: str = "", intention: str = "", iteration_count: int = 5)
 
 
 if __name__ == "__main__":
-    import asyncio # important for async functions
+    import asyncio 
 
     content: str = "I went to the city center. I talked to a few people. I took some pictures. I bought some souvenirs. I had a great time."
     intention: str = "a good news article"

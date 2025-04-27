@@ -9,8 +9,9 @@ async def main(data: dict = {}) -> dict:
             "intention": data["desired_product"],
             "content": data["user_input"],
             "evaluation": data["evaluation"],
-            "evaluation_truth_value": data["evaluation_truth_value"]
-        }
+            "rank": data["test"]["result"]["final"]["rank"],
+            "iterations_max": data["iteration_count"]
+            }
 
     result: dict = await make_plan(planning_data, data["iteration_count"])
     data["plan"] = result
