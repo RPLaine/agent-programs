@@ -1,7 +1,7 @@
 import tools.utils.api as api
 from tools.true_or_false import true_or_false
 
-def summarization(text, focus="", recursion_level=0):
+async def summarization(text, focus="", recursion_level=0):
     MAX_CHARS = 5000
     MAX_RECURSION = 3
     
@@ -11,7 +11,7 @@ def summarization(text, focus="", recursion_level=0):
         print(f"Text truncated from {len(text)} to {len(truncated_text)} characters.")
         text = truncated_text
     elif len(text) > MAX_CHARS:
-        return handle_long_text(text, focus, MAX_CHARS, recursion_level)
+        return await handle_long_text(text, focus, MAX_CHARS, recursion_level)
     
     if focus:
         if true_or_false(f"Focus: {focus} . Is the focus valid for this text: {text} ?"):
@@ -52,11 +52,11 @@ Respond with only one message.
 """
  
     data = {"prompt": prompt, "max_length": 5000}
-    response = api.request(data)
+    response = await api.request(data)
 
     return response
 
-def handle_long_text(text, focus, max_chars, recursion_level):
+async def handle_long_text(text, focus, max_chars, recursion_level):
     parts = split_text(text, max_chars)
       # Limit to 5 parts if there are more than 5
     if len(parts) > 5:
@@ -67,7 +67,7 @@ def handle_long_text(text, focus, max_chars, recursion_level):
     part_summaries = []
     for i, part in enumerate(parts):
         print(f"Summarizing part {i+1} of {len(parts)}...")
-        part_summary = summarization(part, focus, recursion_level + 1)
+        part_summary = await summarization(part, focus, recursion_level + 1)
         part_summaries.append(part_summary)
     
     combined_summary = "\n\n".join(part_summaries)
@@ -75,7 +75,7 @@ def handle_long_text(text, focus, max_chars, recursion_level):
     # Check if further summarization is needed and if we haven't hit recursion limit
     if len(parts) > 1 and recursion_level < 3:
         print("Creating final consolidated summary...")
-        return summarization(combined_summary, focus, recursion_level + 1)
+        return await summarization(combined_summary, focus, recursion_level + 1)
     
     return combined_summary
 
@@ -205,6 +205,8 @@ def split_into_sentences(text):
     return sentences
 
 if __name__ == "__main__":
+    import asyncio
+    
     text = """
 To develop a machine learning model that can generate a summary for a given text, a deep learning approach using transformer-based architectures, such as BERT or T5, can be effective. The first step is data collection, where a large dataset of documents and their corresponding summaries is required. Preprocessing the data involves cleaning the text, tokenizing, and dividing the dataset into training, validation, and testing sets.
 After preprocessing, the next step is training the model using the training dataset. This can be done using a framework like TensorFlow or PyTorch. The model is trained to predict the summary given the full text. During training, the model learns to understand the structure and content of the text to generate accurate summaries.
@@ -212,5 +214,5 @@ Evaluation is a crucial step in the process. The model's performance is evaluate
 Fine-tuning and optimization are the final steps in developing the model. The model can be fine-tuned using the validation set to improve its performance. Techniques like learning rate scheduling, weight decay, and dropout can be used to prevent overfitting and improve the model's generalization ability.
 Once the model is trained and optimized, it can be used to generate summaries for new texts. The generated summaries can then be evaluated for coherence, relevance, and fluency to ensure they meet the desired standards.
 """
-    summary = summarization(text)
+    summary = asyncio.run(summarization(text))
     print(summary)

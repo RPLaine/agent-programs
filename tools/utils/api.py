@@ -1,15 +1,16 @@
-import requests
+import aiohttp
 from tools.utils.response_cleaner import clean_response
 
 url = "https://www.northbeach.fi/dolphin"
 
-def request(data) -> str:
+async def request(data) -> str:
     data["max_length"] = 5000
-    response = requests.post(url, json=data)
-    response.encoding = 'utf-8'
-    result = clean_response(response.text)
-    
-    return result
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=data) as response:
+            text = await response.text()
+            result = clean_response(text)
+            
+            return result
 
 if __name__ == "__main__":
     test_data = {
@@ -26,8 +27,9 @@ Write a short poem about dolphins.
         "max_length": 500
     }
     
+    import asyncio
     print("Sending request to dolphin API...")
-    response = request(test_data)
+    response = asyncio.run(request(test_data))
     
     # Verify the response is a string
     assert isinstance(response, str), f"API response is not a string, got {type(response).__name__} instead"

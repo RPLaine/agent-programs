@@ -1,8 +1,8 @@
 import tools.utils.api as api
 from tools.web.web_research import get_web_research
 
-def explanation_with_websearch(question):
-    web_research = get_web_research(query=question)
+async def explanation_with_websearch(question):
+    web_research = await get_web_research(query=question)
     
     system_prompt = """
 You are an explanation agent with web search capabilities. Your task is to provide clear, informative explanations for factual statements after determining their accuracy and researching online sources. Follow these guidelines:
@@ -35,7 +35,7 @@ Create only one message.
 """    
     
     data = {"prompt": prompt, "max_length": 1024}
-    response = api.request(data)
+    response = await api.request(data)
     
     result = {
         "result": response,
@@ -45,6 +45,7 @@ Create only one message.
     return result
 
 if __name__ == "__main__":
+    import asyncio
     question = input("Enter a statement for evaluation and explanation: ")
-    result = explanation_with_websearch(question)
+    result = asyncio.run(explanation_with_websearch(question))
     print(f"\nEvaluation and Explanation: {result['result']}")

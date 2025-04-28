@@ -2,7 +2,7 @@ from tools.web.google_search import google_search, get_content, extract_text_fro
 from tools.summarization import summarization
 from tools.information_distiller import distill_text
 
-def get_web_research(
+async def get_web_research(
     query, 
     num_results=3,
     custom_focus=None
@@ -48,7 +48,7 @@ def get_web_research(
         
         if html_content:
             extracted_text = extract_text_from_html(html_content)
-            text_content = summarization(extracted_text, focus=focus_for_content)                  
+            text_content = await summarization(extracted_text, focus=focus_for_content)                  
             all_text += f"\n\nContent from {link}:\n{text_content}"
         else:
             print(f"[ERROR] Failed to retrieve content from {link}.")
@@ -57,9 +57,9 @@ def get_web_research(
         print(f"[INFO] Generating final summary...")
         print(f"[INFO] Focus for content: {focus_for_content}")
         print(f"[INFO] All text content: {all_text}")
-        summary = distill_text(all_text, focus_for_content)
+        summary = await distill_text(all_text, focus_for_content)
         print(f"[INFO] Final summary: {summary}")
-        all_text += "\n\n" + summary
+        all_text += f"\n\n{summary}"
         print(f"[INFO] Final summary added to all text.")
         
         return {
@@ -77,6 +77,7 @@ def get_web_research(
 if __name__ == "__main__":
     # Test the web research functionality
     import argparse
+    import asyncio
     
     parser = argparse.ArgumentParser(description="Web Research Tool")
     parser.add_argument("query", type=str, help="The search query to research")
@@ -86,11 +87,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     print(f"[INFO] Starting web research for query: {args.query}")
-    result = get_web_research(
+    result = asyncio.run(get_web_research(
         query=args.query,
         num_results=args.results,
         custom_focus=args.focus
-    )
+    ))
     
     print("\n" + "="*50)
     print(f"[RESULT] Web Research Summary:")

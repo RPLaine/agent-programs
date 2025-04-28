@@ -1,11 +1,28 @@
 import tools.utils.api as api
 
-def detect_extraction_goal(input_text):
+async def distill_text(text, focus=""):
+    """
+    Distill key information from text with a specific focus.
+    
+    Args:
+        text (str): The text to distill information from
+        focus (str): Optional focus area for the distillation
+        
+    Returns:
+        str: The distilled information
+    """
+    system_prompt = f"""
+You are an information distillation specialist. Your task is to analyze text and extract the most essential and relevant information with a specific focus. Follow these guidelines:
 
-    system_prompt = """
-You are a text analysis specialist. Your task is to identify what information should be extracted from this text.
-The text may contain an explicit question, request, or information need. 
-Analyze the text and determine a clear, concise extraction goal that reflects what information is being sought.
+1. Focus specifically on information related to: "{focus}"
+2. Extract only the most important and relevant facts, insights, and findings.
+3. Prioritize accuracy and factual correctness over comprehensiveness.
+4. Present the information in a clear, structured manner.
+5. Maintain objectivity and avoid inserting opinions or speculation.
+6. Ensure the distilled information represents the core essence of the original content.
+7. Exclude tangential or irrelevant details that don't directly address the focus area.
+
+Your output should be a concise collection of the most critical information from the source text, directly addressing the specified focus area.
 """
 
     prompt = f"""
@@ -13,70 +30,26 @@ Analyze the text and determine a clear, concise extraction goal that reflects wh
 {system_prompt}
 <|im-end|>
 <|im-user|>
-Text: {input_text}
+Please distill the following text, focusing on information related to: "{focus}"
 
-Please determine what extraction goal should be used for this text. 
-Respond with a clear, concise statement of what information should be extracted.
+{text}
+
+Respond with only one message.
 <|im-end|>
 <|im-assistant|>
 """
-
+ 
     data = {"prompt": prompt, "max_length": 5000}
-    response = api.request(data)
-    
-    return response
+    response = await api.request(data)
 
-def distill_text(input_text, extraction_goal=None):
-
-    if extraction_goal is None:
-        extraction_goal = detect_extraction_goal(input_text)
-    
-    system_prompt = """
-You are a text distillation specialist. Your task is to extract specific information from text that contains additional or irrelevant content. Follow these guidelines:
-
-1. Focus only on the specific information requested in the extraction goal
-2. Remove all irrelevant content, padding, and unnecessary text
-3. Preserve the exact wording of the relevant information when possible
-4. Structure your output to be clean and direct
-5. If the requested information is not present, return None
-"""
-
-    prompt = f"""
-<|im-system|>
-{system_prompt}
-<|im-end|>
-<|im-user|>
-Text: {input_text}
-
-Extraction goal: {extraction_goal}
-
-Please extract only the specific information requested from the text. Remove all irrelevant content and provide only what was requested.
-<|im-end|>
-<|im-assistant|>
-"""
-
-    data = {"prompt": prompt, "max_length": 5000}
-    response = api.request(data)
-    
     return response.strip()
 
-def extract_key_information(input_text, extraction_goal=None):
-
-    if extraction_goal is None:
-        extraction_goal = detect_extraction_goal(input_text)
-        
-    distilled_result = distill_text(input_text, extraction_goal)
-    
-    return {
-        "original_text": input_text,
-        "extraction_goal": extraction_goal,
-        "distilled_result": distilled_result
-    }
-
 if __name__ == "__main__":
-    user_text = input("Enter the text to process: ")
+    import asyncio
     
-    result = extract_key_information(user_text)
+    text = """
+    [Your test text here]
+    """
     
-    print(f"\nAutomatically detected extraction goal: {result['extraction_goal']}")
-    print(f"Distilled result: {result['distilled_result']}")
+    result = asyncio.run(distill_text(text, "key information"))
+    print(result)
