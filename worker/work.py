@@ -2,29 +2,8 @@ import asyncio
 
 from worker.tools.create_query import main as create_query
 from worker.tools.improve_content import main as improve_content
+from tools.web.web_research import get_web_research
 
-
-async def websearch(task: str = "", data: dict = {}) -> dict:
-    if not task or not data:
-        print("No task or data provided for web search.")
-        return { "error": "No task or data provided" }
-    
-    from tools.explanation_websearch import explanation_with_websearch as get_web_research
-
-    query_text: str = await create_query(data, task)
-    result = await get_web_research(query_text)
-
-    return result
-
-async def use_new_data(data: dict = {}, new_data: str = "", task: str = "") -> str:
-    if not data or not new_data or not data:
-        print("No data, new data, or task provided for use_data.")
-        return ""
-
-
-    result = await improve_content(data, new_data, task)
-
-    return result
 
 async def main(data: dict = {}) -> None:
     for task in data["tasks"]:
@@ -36,10 +15,11 @@ async def main(data: dict = {}) -> None:
             if tool == "Let AI do a web search":
                 print(f"Performing web search for task: {task['task']}")
 
-                websearch_result = await websearch(task["task"], data)
+                web_research_query = await create_query(data, task["task"])
+                websearch_result = await get_web_research(web_research_query, 3)
                 task["data"].append(websearch_result)
 
-                improved_content = await use_new_data(data, websearch_result["result"], task)
+                improved_content = await improve_content(data, websearch_result["summary"], task)
                 
                 # test if data["content"] is a string
                 if isinstance(data["content"], str):

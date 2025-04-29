@@ -38,3 +38,7 @@ if __name__ == "__main__":
     asyncio.run(main(settings))
 
     print(json.dumps(settings, indent=4))
+
+    for content, i in settings["content"]:
+        print("Content ", i, "-" * 20)
+        print(content)
