@@ -29,11 +29,7 @@ async def main(data: dict = {}) -> None:
                 print(f"  ├─ Improving content based on search results...")
                 improved_content = await improve_content(data, websearch_result["summary"], task)
                 print(f"  └─ Content improved: {len(improved_content)} characters")
-                
-                # test if data["content"] is a string
-                if isinstance(data["content"], str):
-                    content_list = [data["content"]]
-                    data["content"] = content_list
+            
 
                 data["content"].append(improved_content)
                 
@@ -75,7 +71,7 @@ if __name__ == "__main__":
 
     data: dict = {
         "claim": "ascending list of numbers",
-        "content": content,
+        "content": [content],
         "iterations": 3,
         "tasks": [
             {

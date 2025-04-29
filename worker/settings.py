@@ -1,11 +1,13 @@
 import time
 import uuid
 
-content: str = """Header: Something is happening in Helsinki right now.
-Content: """
+content: str = """
+['Header: Something is happening in Helsinki right now'],
+['Content: ']
+"""
 settings: dict = {
     "claim": "a complete news article",
-    "content": content,
+    "content": [content],
     "iterations": 5,
     "pass_value": 0.85,
     "session": {

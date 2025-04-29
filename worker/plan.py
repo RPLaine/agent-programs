@@ -9,7 +9,7 @@ async def main(data: dict = {}) -> None:
     {data["claim"]}
 
     CONTENT: 
-    {data["content"]}
+    {data["content"][-1]}
 
     How can the content be improved to meet the claim?
     """
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     data: dict = {
         "claim": "a good task list for improving the content towards a truth",
-        "content": "The Earth is flat. The sky is green. The sun rises in the west.",
+        "content": ["Insufferable", "The Earth is flat. The sky is green. The sun rises in the west."],
         "iterations": 3,
         "tools": [
             "Let AI do a web search",

@@ -22,19 +22,19 @@ async def main(data: dict = {}, new_data: str = "", task: str = "") -> str:
     print(f"  ├─ Max iterations: {data['iterations']}")
 
     user_prompt: str = f"""
-CLAIM:
-{data["claim"]}
-
-CONTENT:
+INITIAL CONTENT:
 {data["content"]}
 
-DATA:
+NEW DATA:
 {new_data}
 
 TASK:
 {task}
 
-How can the CONTENT be improved to better match the CLAIM by incorporating factual information from the DATA according to the TASK?
+CLAIM:
+The content should improve towards being {data["claim"]}
+
+How can the  INITIAL CONTENT be improved to better match the CLAIM by incorporating information from the NEW DATA according to the TASK?
 """
 
     improved_content: str = ""

@@ -12,12 +12,12 @@ async def main(data: dict) -> None:
 
     print(f"\n==== STARTING TEST MODULE ====")
     print(f"Testing claim: '{data['claim']}'")
-    print(f"Content length: {len(data['content'])} characters")
+    print(f"Content length: {len(data['content'][-1])} characters")
     print(f"Iterations: {data['iterations']}")
 
     user_prompt: str = f"""
 CONTENT:
-{data["content"]}
+{data["content"][-1]}
 
 CLAIM:
 This content is {data["claim"]}
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     data: dict = {
         "claim": claim,
-        "content": content,
+        "content": [content],
         "iterations": 5
     }
 
