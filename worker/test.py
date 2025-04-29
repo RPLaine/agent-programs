@@ -10,6 +10,11 @@ async def main(data: dict) -> None:
     - iterations: int
     """
 
+    print(f"\n==== STARTING TEST MODULE ====")
+    print(f"Testing claim: '{data['claim']}'")
+    print(f"Content length: {len(data['content'])} characters")
+    print(f"Iterations: {data['iterations']}")
+
     user_prompt: str = f"""
 CONTENT:
 {data["content"]}
@@ -25,11 +30,13 @@ How well does the claim describe the content?
     i: int = 0
     while i < data["iterations"]:
         try:
+            print(f"  ├─ Running test iteration {i+1}/{data['iterations']}...")
             response: float = float(await run_agent("test", user_prompt))
             responses.append(response)
+            print(f"  ├─ Test iteration {i+1} result: {response:.2f}")
             i += 1
         except Exception as e:
-            print(e)
+            print(f"  ├─ ⚠️ Test iteration failed: {e}")
             continue
 
     stats: dict = {
@@ -45,7 +52,14 @@ How well does the claim describe the content?
         "value": stats["mean"]
     }
 
+    print(f"  ├─ Test complete. Results:")
+    print(f"  ├─ Mean: {stats['mean']:.2f}")
+    print(f"  ├─ Min: {stats['min']:.2f}")
+    print(f"  ├─ Max: {stats['max']:.2f}")
+    print(f"  └─ Std Dev: {stats['std']:.2f}")
+
     data["action"] = ""
+    print(f"\n==== TEST MODULE COMPLETED ====")
 
 
 if __name__ == "__main__":

@@ -21,13 +21,16 @@ class Agent:
         self.handle_output_dir()
     
     async def process(self, user_input: str = "", model_url: str = "") -> str:
+        print(f"  ├─ Creating prompt for agent...")
         prompt: str = self.create_prompt(user_input)
         if model_url == "": model_url = self.llm_url
+        
+        print(f"  ├─ Sending request to LLM at {model_url.split('/')[-1]}")
         data: dict = {
             "prompt": prompt,
             "user_input": user_input,
             "model_url": model_url
-            }
+        }
         response: str = await self.request(data)
 
         return response
@@ -65,16 +68,27 @@ class Agent:
                 result: str = ""
                 i: int = 0
                 while i < tries:
-                    async with session.post(data["model_url"], json=data, timeout=timeout) as response:
-                        response.raise_for_status()
-                        response_text = await response.text()
-                        result = self.clean_response_text(response_text)
-                        if result:
-                            break
+                    try:
+                        print(f"  ├─ Request attempt {i+1}/{tries} to LLM...")
+                        async with session.post(data["model_url"], json=data) as response:
+                            response.raise_for_status()
+                            response_text = await response.text()
+                            result = self.clean_response_text(response_text)
+                            if result:
+                                print(f"  ├─ Received response: {len(result)} characters")
+                                break
+                            else:
+                                print(f"  ├─ ⚠️ Empty response received")
+                    except Exception as e:
+                        print(f"  ├─ ⚠️ Request attempt {i+1} failed: {str(e)[:100]}...")
                     i += 1
+                    
+                if not result:
+                    print(f"  ├─ ❌ All {tries} request attempts failed")
                 return result
         except Exception as e:
-            print(f"Error: {e}")
+            error_msg = f"Error: {e}"
+            print(f"  ├─ ❌ {error_msg}")
             return str(e)
         
     def clean_response_text(self, response_text: str) -> str:

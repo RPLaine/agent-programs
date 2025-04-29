@@ -6,20 +6,29 @@ from tools.web.web_research import get_web_research
 
 
 async def main(data: dict = {}) -> None:
-    for task in data["tasks"]:
-        print(f"Processing task: {task['task']}")
+    print(f"\n==== STARTING WORK MODULE ====")
+    print(f"Processing {len(data['tasks'])} tasks")
+    
+    for i, task in enumerate(data["tasks"]):
+        print(f"\n[Task {i+1}/{len(data['tasks'])}] Processing: {task['task']}")
 
         task["data"] = []
 
         for tool in task["tools"]:
             if tool == "Let AI do a web search":
-                print(f"Performing web search for task: {task['task']}")
+                print(f"🔍 Performing web search for task: {task['task']}")
 
                 web_research_query = await create_query(data, task["task"])
+                print(f"  ├─ Created query: {web_research_query[:50]}..." if len(web_research_query) > 50 else f"  ├─ Created query: {web_research_query}")
+                
                 websearch_result = await get_web_research(web_research_query, 3)
+                print(f"  ├─ Web search completed: {len(websearch_result['summary'])} characters in summary")
+                
                 task["data"].append(websearch_result)
 
+                print(f"  ├─ Improving content based on search results...")
                 improved_content = await improve_content(data, websearch_result["summary"], task)
+                print(f"  └─ Content improved: {len(improved_content)} characters")
                 
                 # test if data["content"] is a string
                 if isinstance(data["content"], str):
@@ -32,24 +41,30 @@ async def main(data: dict = {}) -> None:
                 
             elif tool == "Let AI search RSS feeds":
                 # Simulate searching RSS feeds
-                print(f"Searching RSS feeds for task: {task['task']}")
+                print(f"📰 Searching RSS feeds for task: {task['task']}")
                 # wait a second
                 await asyncio.sleep(1)
+                print(f"  └─ RSS search completed (simulated)")
             elif tool == "Let a journalist take a photo":
                 # Simulate taking a photo
-                print(f"Taking photo for task: {task['task']}")
+                print(f"📷 Taking photo for task: {task['task']}")
                 # wait a second
                 await asyncio.sleep(1)
+                print(f"  └─ Photo captured (simulated)")
             elif tool == "Let a journalist interview a person":
                 # Simulate interviewing a person
-                print(f"Interviewing for task: {task['task']}")
+                print(f"🎤 Interviewing for task: {task['task']}")
                 # wait a second
                 await asyncio.sleep(1)
+                print(f"  └─ Interview completed (simulated)")
             else:
-                print(f"Unknown tool: {tool}")
+                print(f"❓ Unknown tool: {tool}")
                 # wait a second
                 await asyncio.sleep(1)
-        # Simulate task completion
+        
+        print(f"✅ Task {i+1} completed: {task['task']}")
+    
+    print(f"\n==== WORK MODULE COMPLETED ====")
 
 
 if __name__ == "__main__":

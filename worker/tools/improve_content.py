@@ -12,10 +12,14 @@ async def main(data: dict = {}, new_data: str = "", task: str = "") -> str:
     """
 
     if "claim" not in data or "content" not in data or "iterations" not in data or not new_data or not task:
-        print("ERROR: Missing required keys in data dictionary or new_data or task is empty.")
+        print("❌ ERROR: Missing required keys in data dictionary or new_data or task is empty.")
         return ""
 
-    print(f"Improving content: {task}")
+    print(f"\n📝 Improving content for task: {task if isinstance(task, dict) else task}")
+    print(f"  ├─ Using claim: {data['claim']}")
+    print(f"  ├─ Content length: {len(data['content']) if isinstance(data['content'], str) else 'multiple items'}")
+    print(f"  ├─ New data length: {len(new_data)} characters")
+    print(f"  ├─ Max iterations: {data['iterations']}")
 
     user_prompt: str = f"""
 CLAIM:
@@ -37,14 +41,16 @@ How can the CONTENT be improved to better match the CLAIM by incorporating factu
     i: int = 0
     while i < data["iterations"]:
         try:
+            print(f"  ├─ Attempt {i + 1}/{data['iterations']} to improve content...")
             improved_content: str = await run_agent("improve_content", user_prompt)
+            print(f"  ├─ Content improvement successful on attempt {i + 1}")
             break
         except Exception as e:
-            print(f"Attempt {i + 1} failed: {e}")
+            print(f"  ├─ ⚠️ Attempt {i + 1} failed: {e}")
             i += 1
             continue
 
-    print(f"Improved content created: {improved_content}")
+    print(f"  └─ Improved content created: {len(improved_content)} characters")
 
     return improved_content
 

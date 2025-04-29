@@ -39,6 +39,6 @@ if __name__ == "__main__":
 
     print(json.dumps(settings, indent=4))
 
-    for content, i in settings["content"]:
+    for i, content in settings["content"]:
         print("Content ", i, "-" * 20)
         print(content)
