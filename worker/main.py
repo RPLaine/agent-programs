@@ -39,6 +39,18 @@ if __name__ == "__main__":
 
     print(json.dumps(settings, indent=4))
 
-    for i, content in settings["content"]:
-        print("Content ", i, "-" * 20)
-        print(content)
+    # Display content progress in a more visual way
+    print("\n===== CONTENT PROGRESS =====")
+    for i, content in enumerate(settings["content"]):
+        value = content.get("value", 0)
+        max_value = settings.get("pass_value", 100)
+        progress = min(int((value / max_value) * 20), 20) if max_value > 0 else 0
+        
+        bar = "█" * progress + "░" * (20 - progress)
+        percentage = (value / max_value * 100) if max_value > 0 else 0
+        
+        print(f"Content {i}: [{bar}] {value}/{max_value} ({percentage:.1f}%)")
+        if "title" in content:
+            print(f"  Title: {content['title']}")
+        print(f"  Details: {content}")
+        print()
