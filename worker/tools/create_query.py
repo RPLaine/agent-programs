@@ -21,7 +21,7 @@ CLAIM:
 {data["claim"]}
 
 CONTENT:
-{data["content"]}
+{data["content"][-1]}
 
 TASK:
 {task}

@@ -27,36 +27,32 @@ async def main(data: dict = {}) -> None:
                 task["data"].append(websearch_result)
 
                 print(f"  ├─ Improving content based on search results...")
-                improved_content = await improve_content(data, websearch_result["summary"], task)
+                improved_content = await improve_content(data, websearch_result["summary"], task["task"])
                 print(f"  └─ Content improved: {len(improved_content)} characters")
             
 
                 data["content"].append(improved_content)
                 
-                return # DEVELOPMENT ENDPOINT - remove this line in production
+                # return # DEVELOPMENT ENDPOINT - remove this line in production
                 
             elif tool == "Let AI search RSS feeds":
                 # Simulate searching RSS feeds
                 print(f"📰 Searching RSS feeds for task: {task['task']}")
                 # wait a second
-                await asyncio.sleep(1)
                 print(f"  └─ RSS search completed (simulated)")
             elif tool == "Let a journalist take a photo":
                 # Simulate taking a photo
                 print(f"📷 Taking photo for task: {task['task']}")
                 # wait a second
-                await asyncio.sleep(1)
                 print(f"  └─ Photo captured (simulated)")
             elif tool == "Let a journalist interview a person":
                 # Simulate interviewing a person
                 print(f"🎤 Interviewing for task: {task['task']}")
                 # wait a second
-                await asyncio.sleep(1)
                 print(f"  └─ Interview completed (simulated)")
             else:
                 print(f"❓ Unknown tool: {tool}")
                 # wait a second
-                await asyncio.sleep(1)
         
         print(f"✅ Task {i+1} completed: {task['task']}")
     

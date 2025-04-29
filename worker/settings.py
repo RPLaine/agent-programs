@@ -3,7 +3,8 @@ import uuid
 
 content: str = """
 ['Header: Something is happening in Helsinki right now'],
-['Content: ']
+['Content: '],
+['Sources: ']
 """
 settings: dict = {
     "claim": "a complete news article",

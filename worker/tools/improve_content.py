@@ -23,7 +23,7 @@ async def main(data: dict = {}, new_data: str = "", task: str = "") -> str:
 
     user_prompt: str = f"""
 INITIAL CONTENT:
-{data["content"]}
+{data["content"][-1]}
 
 NEW DATA:
 {new_data}
