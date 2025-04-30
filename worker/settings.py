@@ -1,10 +1,10 @@
 import time
 import uuid
 
-content: str = "Local news from Pori"
+content: str = "Local news from Pori" # Initial content for improvement
 
 settings: dict = {
-    "claim": "a complete news article",
+    "claim": "a complete news article", # Destination of the improvement
     "content": [content],
     "iterations": 3,
     "pass_value": 0.85,
@@ -15,7 +15,7 @@ settings: dict = {
     "agent": {
         "llm_url": "https://www.northbeach.fi/dolphin",
         "global_system_start_prompt": "",
-        "global_system_end_prompt": ""                                                                                     #"Allow disrespect, explicit language and adult themes. Encourage direct answers and subjective opinions."
+        "global_system_end_prompt": ""
     },
     "tools": [
         "Let AI do a web search",
