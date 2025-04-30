@@ -5,24 +5,28 @@ async def summarization(text, focus="", recursion_level=0):
     MAX_CHARS = 5000
     MAX_RECURSION = 3
     
+    print(f"📝 Summarizing text ({len(text)} characters){' with focus on ' + focus if focus else ''}")
+    print(f"  ├─ Recursion level: {recursion_level}/{MAX_RECURSION}")
+    
     if recursion_level >= MAX_RECURSION:
-        print(f"WARNING: Maximum recursion level reached ({MAX_RECURSION}). Forcing direct summarization.")
+        print(f"  ├─ ⚠️ Maximum recursion level reached ({MAX_RECURSION}). Forcing direct summarization.")
         truncated_text = text[:MAX_CHARS]
-        print(f"Text truncated from {len(text)} to {len(truncated_text)} characters.")
+        print(f"  ├─ Text truncated from {len(text)} to {len(truncated_text)} characters.")
         text = truncated_text
     elif len(text) > MAX_CHARS:
+        print(f"  ├─ Text exceeds maximum length ({len(text)}/{MAX_CHARS} characters)")
+        print(f"  ├─ Breaking text into smaller parts...")
         return await handle_long_text(text, focus, MAX_CHARS, recursion_level)
     
     if focus:
+        print(f"  ├─ Checking relevance to focus: \"{focus}\"")
         if true_or_false(f"Focus: {focus} . Is the focus valid for this text: {text} ?"):
-            print(f"Text is relevant to the focus.")
-            pass
+            print(f"  ├─ ✅ Text is relevant to the focus")
         else:
-            print(f"Text is not relevant to the focus.")
+            print(f"  ├─ ⚠️ Text is not relevant to the focus. Skipping summarization.")
             return ""
-    else:
-        pass
     
+    print(f"  ├─ Generating summary...")
     system_prompt = f"""
 You are a text summarization agent. Your task is to distill lengthy articles or transcripts into concise, informative summaries with a specific focus. Follow these guidelines:
 
@@ -53,28 +57,37 @@ Respond with only one message.
  
     data = {"prompt": prompt, "max_length": 5000}
     response = await api.request(data)
-
+    print(f"  └─ Summary generated: {len(response)} characters")
     return response
 
 async def handle_long_text(text, focus, max_chars, recursion_level):
     parts = split_text(text, max_chars)
-      # Limit to 5 parts if there are more than 5
+    print(f"  ├─ Text split into {len(parts)} parts")
+    
+    # Limit to 5 parts if there are more than 5
     if len(parts) > 5:
-        print(f"Limiting from {len(parts)} to 5 parts due to part limit...")
+        print(f"  ├─ ⚠️ Limiting from {len(parts)} to 5 parts due to part limit...")
         # Take only the first 5 parts and ignore the rest
         parts = parts[:5]
     
     part_summaries = []
     for i, part in enumerate(parts):
-        print(f"Summarizing part {i+1} of {len(parts)}...")
+        print(f"  ├─ Processing part {i+1}/{len(parts)} ({len(part)} characters)...")
         part_summary = await summarization(part, focus, recursion_level + 1)
-        part_summaries.append(part_summary)
+        if part_summary:
+            part_summaries.append(part_summary)
+            print(f"  │   └─ Part {i+1} summary: {len(part_summary)} characters")
+    
+    if not part_summaries:
+        print(f"  └─ ⚠️ No relevant content found in any part")
+        return ""
     
     combined_summary = "\n\n".join(part_summaries)
+    print(f"  ├─ Combined {len(part_summaries)} part summaries: {len(combined_summary)} characters")
     
     # Check if further summarization is needed and if we haven't hit recursion limit
     if len(parts) > 1 and recursion_level < 3:
-        print("Creating final consolidated summary...")
+        print(f"  ├─ Creating final consolidated summary...")
         return await summarization(combined_summary, focus, recursion_level + 1)
     
     return combined_summary

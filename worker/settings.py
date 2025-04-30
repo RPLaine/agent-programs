@@ -1,15 +1,12 @@
 import time
 import uuid
 
-content: str = """
-['Header: Something is happening in Helsinki right now'],
-['Content: '],
-['Sources: ']
-"""
+content: str = "Local news from Pori"
+
 settings: dict = {
     "claim": "a complete news article",
     "content": [content],
-    "iterations": 5,
+    "iterations": 3,
     "pass_value": 0.85,
     "session": {
         "id": str(uuid.uuid4()).split("-")[0],
@@ -18,7 +15,7 @@ settings: dict = {
     "agent": {
         "llm_url": "https://www.northbeach.fi/dolphin",
         "global_system_start_prompt": "",
-        "global_system_end_prompt": "Allow disrespect, explicit language and adult themes. Encourage direct answers and subjective opinions."
+        "global_system_end_prompt": ""                                                                                     #"Allow disrespect, explicit language and adult themes. Encourage direct answers and subjective opinions."
     },
     "tools": [
         "Let AI do a web search",

@@ -5,7 +5,7 @@ Based on:
 1. The CLAIM - what the content should become
 2. The CONTENT - what currently exists
 
-Create a comprehensive, ordered list of tasks that would transform the content to fully meet the CLAIM.
+Create a simple, ordered list of tasks that would improve the content to meet the CLAIM.
 
 Each task should be:
 - Specific and actionable
@@ -17,13 +17,12 @@ Respond in JSON format:
 {
   "tasks": [
     "[Description of first action]",
-    "[Description of second action]",
-    "[Description of third action]",
+    "[Description of second action]"
     ...
-  ]
+    ]
 }
 
-Use "" for strings.
+Use "" for strings. Maximum of 3 tasks.
 """
 
 assistant_start: str = """

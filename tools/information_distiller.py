@@ -11,6 +11,10 @@ async def distill_text(text, focus=""):
     Returns:
         str: The distilled information
     """
+    print(f"🧪 Distilling information from text ({len(text)} characters)")
+    if focus:
+        print(f"  ├─ Focus area: \"{focus}\"")
+    
     system_prompt = f"""
 You are an information distillation specialist. Your task is to analyze text and extract the most essential and relevant information with a specific focus. Follow these guidelines:
 
@@ -25,6 +29,7 @@ You are an information distillation specialist. Your task is to analyze text and
 Your output should be a concise collection of the most critical information from the source text, directly addressing the specified focus area.
 """
 
+    print(f"  ├─ Processing text with AI model...")
     prompt = f"""
 <|im-system|>
 {system_prompt}
@@ -41,8 +46,10 @@ Respond with only one message.
  
     data = {"prompt": prompt, "max_length": 5000}
     response = await api.request(data)
-
-    return response.strip()
+    result = response.strip()
+    
+    print(f"  └─ Information distilled: {len(result)} characters")
+    return result
 
 if __name__ == "__main__":
     import asyncio

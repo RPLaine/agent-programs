@@ -7,60 +7,62 @@ async def get_web_research(
     num_results=3,
     custom_focus=None
 ):
-    print(f"[INFO] Performing web research for query: {query}")
-    print(f"[INFO] Number of search results to retrieve: {num_results}")
-    print(f"[INFO] Custom focus for summarization: {custom_focus}")
+    print(f"🔍 Performing web research for query: '{query}'")
+    print(f"  ├─ Number of search results requested: {num_results}")
+    if custom_focus:
+        print(f"  ├─ Custom focus for summarization: '{custom_focus}'")
     
     actual_num_results = num_results
     try:
-        print("Estimating the number of searches required...")
+        print(f"  ├─ Estimating required number of searches...")
         number_of_searches = num_results
         # number_of_searches = int(get_number("What is the good number of web searches required for an educated answer for this question: " + query + " ?"))
     except Exception as e:
-        print(f"[ERROR] Failed to get number of searches: {e}")
+        print(f"  ├─ ⚠️ Failed to get number of searches: {e}")
         number_of_searches = num_results
 
-    print(f"[INFO] Number of searches recommended: {number_of_searches}")
+    print(f"  ├─ Recommended number of searches: {number_of_searches}")
     
     if number_of_searches > 5:
-        print("[WARN] Limiting number of searches to 5")
+        print(f"  ├─ ⚠️ Limiting number of searches to maximum of 5")
         actual_num_results = 5
     elif number_of_searches < 1:
-        print("[WARN] Limiting number of searches to 1")
+        print(f"  ├─ ⚠️ Setting minimum number of searches to 1")
         actual_num_results = 1
     else:
         actual_num_results = number_of_searches
-        print(f"[INFO] Performing search with {actual_num_results} results...")
-
+    
+    print(f"  ├─ Executing search with {actual_num_results} results...")
     results = google_search(query, num_results=actual_num_results)
-    print(f"[DEBUG] Search results: {results}")
+    print(f"  ├─ Search completed with {len(results)} results")
     
     all_text = ""
     links = []
     
     focus_for_content = custom_focus if custom_focus else ""
-    print(f"[INFO] Focus for content: {focus_for_content}")
     
-    for result in results:
+    for i, result in enumerate(results):
         link = result["link"]
-        links.append(link)        
+        links.append(link)
+        print(f"  ├─ [{i+1}/{len(results)}] Retrieving content from: {link[:50]}..." if len(link) > 50 else f"  ├─ [{i+1}/{len(results)}] Retrieving content from: {link}")
+        
         html_content = get_content(link)
         
         if html_content:
             extracted_text = extract_text_from_html(html_content)
-            text_content = await summarization(extracted_text, focus=focus_for_content)                  
+            print(f"  │   ├─ Extracted {len(extracted_text)} characters")
+            print(f"  │   ├─ Summarizing content...")
+            text_content = await summarization(extracted_text, focus=focus_for_content)
+            print(f"  │   └─ Summary created: {len(text_content)} characters")
             all_text += f"\n\nContent from {link}:\n{text_content}"
         else:
-            print(f"[ERROR] Failed to retrieve content from {link}.")
+            print(f"  │   └─ ❌ Failed to retrieve content")
     
-    if all_text:        
-        print(f"[INFO] Generating final summary...")
-        print(f"[INFO] Focus for content: {focus_for_content}")
-        print(f"[INFO] All text content: {all_text}")
+    if all_text:
+        print(f"  ├─ Generating final summary from {len(all_text)} characters...")
         summary = await distill_text(all_text, focus_for_content)
-        print(f"[INFO] Final summary: {summary}")
+        print(f"  ├─ Final summary created: {len(summary)} characters")
         all_text += f"\n\n{summary}"
-        print(f"[INFO] Final summary added to all text.")
         
         return {
             "query": query,
@@ -68,11 +70,14 @@ async def get_web_research(
             "summary": all_text
         }
     else:
+        print(f"  └─ ⚠️ No content could be extracted from search results")
         return {
             "query": query,
             "links": links, 
             "summary": "No content could be extracted from the search results."
         }
+    
+    print(f"  └─ Web research completed")
 
 if __name__ == "__main__":
     # Test the web research functionality
